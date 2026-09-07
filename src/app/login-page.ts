@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
 @Component({
@@ -133,12 +132,10 @@ import { AuthService } from './auth.service';
 })
 export class LoginPage {
   private auth = inject(AuthService);
-  private router = inject(Router);
 
-  async signIn() {
-    await this.auth.login();
-    if (this.auth.loggedIn()) {
-      this.router.navigateByUrl('/dashboard');
-    }
+  // The browser leaves for Microsoft here; the app picks the session back up on the way in,
+  // from the initializer, so there is nothing to navigate to on this side.
+  signIn() {
+    this.auth.login();
   }
 }

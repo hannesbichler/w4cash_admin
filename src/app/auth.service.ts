@@ -1,15 +1,27 @@
 import { Injectable, signal } from '@angular/core';
-import { from, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
-import { PublicClientApplication, type AuthenticationResult } from '@azure/msal-browser';
+import {
+  PublicClientApplication,
+  InteractionRequiredAuthError,
+  type AuthenticationResult,
+  type AccountInfo,
+} from '@azure/msal-browser';
 import { environment } from '../environments/environment';
+
+/** Where to send the user once the sign-in redirect lands back on the app. */
+const RETURN_URL_KEY = 'w4cash.auth.returnUrl';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private pca: PublicClientApplication;
 
+  /** Resolves once MSAL is initialized and any redirect response has been consumed. */
+  private ready: Promise<void> | null = null;
+
   loggedIn = signal(false);
   userName = signal('');
+
+  /** Route a guard turned away while signed out, replayed once the sign-in redirect returns. */
+  pendingUrl = signal<string | null>(null);
 
   constructor() {
     this.pca = new PublicClientApplication({
@@ -25,90 +37,136 @@ export class AuthService {
         cacheLocation: 'sessionStorage'
       }
     });
-
-    this.syncSessionState();
   }
 
   isConfigured(): boolean {
     return !!environment.msal.clientId && environment.msal.clientId !== 'YOUR_CLIENT_ID';
   }
 
-  async login(): Promise<void> {
+  /**
+   * MSAL v3+ refuses every call until initialize() has run, and the redirect response has to be
+   * consumed before the router picks a route - otherwise the guard still sees a logged-out app on
+   * the way back from Microsoft. Run once, from an app initializer.
+   */
+  initialize(): Promise<void> {
+    if (!this.ready) {
+      this.ready = this.runInitialize();
+    }
+    return this.ready;
+  }
+
+  private async runInitialize(): Promise<void> {
+    if (!this.isConfigured()) {
+      return;
+    }
+
+    try {
+      await this.pca.initialize();
+      const result = await this.pca.handleRedirectPromise();
+      if (result) {
+        this.applyResult(result);
+      } else {
+        this.syncSessionState();
+      }
+    } catch (err) {
+      console.error('Microsoft sign-in failed', err);
+      this.clearSessionState();
+    }
+  }
+
+  /** Path to restore after the sign-in redirect, or null when there is nothing pending. */
+  takeReturnUrl(): string | null {
+    const url = sessionStorage.getItem(RETURN_URL_KEY);
+    sessionStorage.removeItem(RETURN_URL_KEY);
+    return url;
+  }
+
+  /** Leaves the page: the browser navigates to Microsoft and comes back into initialize(). */
+  async login(returnUrl = this.pendingUrl() ?? '/dashboard'): Promise<void> {
     if (!this.isConfigured()) {
       console.warn('Microsoft authentication is not configured. Update src/environments/environment.ts.');
       return;
     }
 
-    const result = await this.pca.loginPopup({
+    await this.initialize();
+    sessionStorage.setItem(RETURN_URL_KEY, returnUrl);
+
+    await this.pca.loginRedirect({
       scopes: environment.msal.scopes,
       prompt: 'select_account'
     });
-
-    this.applyResult(result);
   }
 
   async logout(): Promise<void> {
-    const accounts = this.pca.getAllAccounts();
-    if (accounts.length) {
-      await this.pca.logoutPopup({ account: accounts[0] });
+    if (!this.isConfigured()) {
+      return;
     }
-    this.loggedIn.set(false);
-    this.userName.set('');
-    this.pca.setActiveAccount(null);
+
+    await this.initialize();
+    const account = this.activeAccount();
+    this.clearSessionState();
+
+    if (account) {
+      await this.pca.logoutRedirect({ account });
+    }
   }
 
-  acquireToken(): Promise<string | null> {
+  async acquireToken(): Promise<string | null> {
     if (!this.isConfigured()) {
-      return Promise.resolve(null);
+      return null;
     }
 
-    const accounts = this.pca.getAllAccounts();
-    if (!accounts.length) {
-      this.loggedIn.set(false);
-      this.userName.set('');
-      return Promise.resolve(null);
+    await this.initialize();
+
+    const account = this.activeAccount();
+    if (!account) {
+      this.clearSessionState();
+      return null;
     }
 
-    return this.pca.acquireTokenSilent({
-      account: accounts[0],
-      scopes: environment.msal.scopes
-    }).then(result => {
+    try {
+      const result = await this.pca.acquireTokenSilent({
+        account,
+        scopes: environment.msal.scopes
+      });
       this.applyResult(result);
       return result.accessToken;
-    }).catch(() => {
-      this.loggedIn.set(false);
-      this.userName.set('');
+    } catch (err) {
+      // The silent refresh is the only place a stale session shows up; sending the user back
+      // through Microsoft is what re-establishes it.
+      if (err instanceof InteractionRequiredAuthError) {
+        this.clearSessionState();
+      }
       return null;
-    });
+    }
+  }
+
+  private activeAccount(): AccountInfo | null {
+    return this.pca.getActiveAccount() ?? this.pca.getAllAccounts()[0] ?? null;
   }
 
   private syncSessionState() {
-    const accounts = this.pca.getAllAccounts();
-    if (accounts.length) {
+    const account = this.activeAccount();
+    if (account) {
+      this.pca.setActiveAccount(account);
       this.loggedIn.set(true);
-      this.userName.set(accounts[0].name ?? accounts[0].username ?? 'Microsoft user');
+      this.userName.set(account.name ?? account.username ?? 'Microsoft user');
+    } else {
+      this.clearSessionState();
     }
   }
 
+  private clearSessionState() {
+    this.pca.setActiveAccount(null);
+    this.loggedIn.set(false);
+    this.userName.set('');
+  }
+
   private applyResult(result: AuthenticationResult) {
+    if (result.account) {
+      this.pca.setActiveAccount(result.account);
+    }
     this.loggedIn.set(true);
     this.userName.set(result.account?.name ?? result.account?.username ?? 'Microsoft user');
   }
-}
-
-export function microsoftAuthInterceptor(req: any, next: any) {
-  const auth = new AuthService();
-
-  if (!req.url.startsWith('/api')) {
-    return next(req);
-  }
-
-  if (!auth.isConfigured()) {
-    return next(req);
-  }
-
-  return from(auth.acquireToken()).pipe(
-    switchMap(token => token ? next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })) : next(req)),
-    catchError(() => next(req))
-  );
 }

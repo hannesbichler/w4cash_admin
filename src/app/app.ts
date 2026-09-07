@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { I18nService } from './i18n.service';
 import { Lang, LANGS, LANG_LABELS } from './translations';
 import { AuthService } from './auth.service';
@@ -56,7 +56,6 @@ const RAILS: Record<string, Rail> = {
 export class App {
   private i18n = inject(I18nService);
   private auth = inject(AuthService);
-  private router = inject(Router);
 
   t = this.i18n.t;
   lang = this.i18n.lang;
@@ -92,18 +91,17 @@ export class App {
     this.i18n.setLang(value as Lang);
   }
 
-  async signInWithMicrosoft() {
+  // Both of these hand the browser over to Microsoft and come back on a fresh page load, so
+  // neither routes on this side.
+  signInWithMicrosoft() {
     this.accountMenuOpen.set(false);
-    await this.auth.login();
-    if (this.auth.loggedIn()) {
-      this.sideNav.set(null);
-    }
+    this.sideNav.set(null);
+    this.auth.login();
   }
 
-  async signOut() {
+  signOut() {
     this.accountMenuOpen.set(false);
-    await this.auth.logout();
     this.sideNav.set(null);
-    this.router.navigateByUrl('/');
+    this.auth.logout();
   }
 }
