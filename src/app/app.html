@@ -55,6 +55,7 @@
 </svg>
 
 <div class="layout">
+  @if (loggedIn()) {
   <header>
     <div class="header-bar">
       <h1>{{ t('app.title') }}</h1>
@@ -121,9 +122,10 @@
       </button>
     </nav>
   </header>
+  }
 
   <div class="body">
-    @if (rail(); as rail) {
+    @if (loggedIn() && rail(); as rail) {
       <!-- Clicks inside the rail must not reach the document handler that closes the dropdowns,
            or picking a screen would shut the rail you picked it from. -->
       <nav class="side-nav" [attr.aria-label]="t(rail.title)" (click)="$event.stopPropagation()">

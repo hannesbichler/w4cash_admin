@@ -33,18 +33,17 @@ import { AuthService } from './auth.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at top, #ffffff 0%, #edf4ff 32%, #dfeaff 100%);
+      background: linear-gradient(160deg, #e9e9ec 0%, #d4d4d8 100%);
       padding: 24px;
     }
     .login-card {
       width: min(440px, 100%);
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid rgba(58, 111, 255, 0.12);
-      border-radius: 22px;
-      box-shadow: 0 24px 60px rgba(39, 74, 180, 0.16);
+      background: #fafafa;
+      border: 1px solid #d4d4d8;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(63, 63, 70, 0.12);
       padding: 28px 28px 24px;
       text-align: left;
-      backdrop-filter: blur(8px);
     }
     .login-brand {
       display: flex;
@@ -58,30 +57,30 @@ import { AuthService } from './auth.service';
       border-radius: 12px;
       display: grid;
       place-items: center;
-      background: linear-gradient(135deg, #3a6fff, #6b8cff);
-      color: #fff;
+      background: #71717a;
+      color: #fafafa;
       font-size: 1.2rem;
       font-weight: 800;
-      box-shadow: 0 10px 18px rgba(58, 111, 255, 0.25);
     }
     .brand-name {
       font-size: 1.1rem;
       font-weight: 800;
-      color: #1a1a2e;
+      color: #3f3f46;
       line-height: 1.1;
     }
     .brand-subtitle {
       font-size: 0.72rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #7584af;
+      color: #8a8a94;
     }
     .login-badge {
       display: inline-block;
       margin-bottom: 14px;
       padding: 6px 10px;
-      background: #e9f0ff;
-      color: #2959e8;
+      background: #ececee;
+      color: #71717a;
+      border: 1px solid #d4d4d8;
       border-radius: 999px;
       font-size: 0.72rem;
       font-weight: 700;
@@ -91,12 +90,12 @@ import { AuthService } from './auth.service';
     h1 {
       margin: 0 0 10px;
       font-size: clamp(2rem, 4vw, 2.5rem);
-      color: #1a1a2e;
+      color: #3f3f46;
       line-height: 1.1;
     }
     p {
       margin: 0 0 24px;
-      color: #5d6787;
+      color: #71717a;
       line-height: 1.6;
     }
     .login-button {
@@ -106,17 +105,17 @@ import { AuthService } from './auth.service';
       gap: 10px;
       width: 100%;
       border: none;
-      background: #3a6fff;
-      color: white;
+      background: #71717a;
+      color: #fafafa;
       border-radius: 12px;
       padding: 13px 18px;
       font: inherit;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 10px 18px rgba(58, 111, 255, 0.2);
+      box-shadow: 0 10px 18px rgba(63, 63, 70, 0.2);
     }
     .login-button:hover {
-      background: #2d5ef2;
+      background: #52525b;
     }
     .ms-logo {
       display: inline-grid;

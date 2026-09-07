@@ -4,6 +4,7 @@ import {
   inject,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeDeAt from '@angular/common/locales/de-AT';
@@ -19,6 +20,9 @@ registerLocaleData(localeDeAt);
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    // zone.js isn't installed, so change detection must be scheduled explicitly - without this,
+    // signal updates from async work (MSAL redirects, HTTP calls, click handlers) never repaint.
+    provideZonelessChangeDetection(),
     // MSAL has to finish reading the sign-in redirect before the router runs a guard, otherwise
     // the app bounces a freshly signed-in user straight back to the login page.
     provideAppInitializer(() => inject(AuthService).initialize()),
