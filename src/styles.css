@@ -1,0 +1,154 @@
+/* You can add global styles to this file, and also import other style files */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { font-family: 'Segoe UI', sans-serif; background: #f0f4ff; color: #1a1a2e; }
+
+button:disabled { opacity: .35; cursor: default; }
+
+/* Action responses float in front of the view instead of pushing its content down. */
+.flash {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  max-width: min(520px, calc(100vw - 40px));
+  background: #fff9e6;
+  color: #7a5500;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  border-left: 3px solid #f5b800;
+  box-shadow: 0 8px 24px rgba(26,26,46,.28);
+}
+
+/* Errors that describe the state of a view, not a response to an action: these stay in flow. */
+.state-error {
+  margin-top: 8px;
+  background: #ffe0e0;
+  color: #c62828;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  border-left: 3px solid #ff3a3a;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge.ok  { background: #d4f5e2; color: #1a7a45; }
+.badge.err { background: #ffe0e0; color: #c62828; }
+
+.btn {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity .15s, transform .1s;
+}
+.btn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+.btn:active:not(:disabled) { transform: translateY(0); }
+.btn-sm { padding: 4px 9px; font-size: 0.8rem; }
+.btn-primary   { background: #3a6fff; color: #fff; box-shadow: 0 2px 6px rgba(58,111,255,.35); }
+.btn-secondary { background: #e8f0ff; color: #3a6fff; }
+.btn-danger    { background: #ff3a3a; color: #fff; box-shadow: 0 2px 6px rgba(255,58,58,.3); }
+
+.filter-input {
+  padding: 6px 10px;
+  border: 1px solid #dde8ff;
+  border-radius: 6px;
+  width: 200px;
+  font-size: 0.9rem;
+  background: #fff;
+  color: #1a1a2e;
+}
+.filter-input:focus { outline: 2px solid #3a6fff; }
+
+.filter-select {
+  padding: 6px 10px;
+  border: 1px solid #dde8ff;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+  color: #1a1a2e;
+  cursor: pointer;
+}
+.filter-select:focus { outline: 2px solid #3a6fff; }
+
+.content { display: flex; flex: 1; overflow: hidden; margin-top: 12px; }
+
+.list-panel { flex: 1; overflow: auto; padding-bottom: 16px; }
+
+.empty { color: #7a8ab0; padding: 32px; text-align: center; font-size: 0.95rem; }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 10px;
+}
+
+.page-info { font-size: 0.85rem; color: #5a6a9a; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(58,111,255,.08);
+}
+
+th {
+  background: #e8f0ff;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #3a6fff;
+  font-weight: 700;
+}
+
+td { padding: 9px 12px; border-bottom: 1px solid #eef2ff; font-size: 0.88rem; vertical-align: middle; }
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td { background: #f0f4ff; cursor: pointer; }
+
+tr.selected td { background: #dde8ff; }
+
+.actions { display: flex; gap: 6px; }
+
+.detail-panel {
+  width: 380px;
+  flex-shrink: 0;
+  background: #fff;
+  border-left: 2px solid #dde8ff;
+  overflow: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-header { display: flex; justify-content: space-between; align-items: flex-start; }
+
+.detail-header h2 { font-size: 1rem; color: #3a6fff; font-weight: 600; }
+
+dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
+
+dt { font-weight: 600; font-size: 0.8rem; color: #7a8ab0; align-self: center; }
+
+dd { font-size: 0.88rem; }
+
+h3 { font-size: 0.78rem; color: #7a8ab0; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+
+.detail-actions { display: flex; gap: 10px; padding-top: 4px; }

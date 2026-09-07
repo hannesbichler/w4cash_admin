@@ -1,0 +1,104 @@
+<div class="tax-view">
+  <div class="toolbar">
+    <input [ngModel]="newCategoryName()" (ngModelChange)="newCategoryName.set($event)" [placeholder]="t('taxes.newName')" class="filter-input" (keydown.enter)="createCategory()" />
+    <button class="btn btn-primary" (click)="createCategory()" [disabled]="!newCategoryName().trim()">{{ t('taxes.new') }}</button>
+    <button class="btn btn-secondary" (click)="loadCategories()">&#8635; {{ t('common.refresh') }}</button>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="content">
+    <div class="list-panel">
+      @if (loadingCategories()) {
+        <div class="empty">{{ t('common.loading') }}</div>
+      } @else if (categories().length === 0) {
+        <div class="empty">{{ t('taxes.none') }}</div>
+      } @else {
+        <table>
+          <thead>
+            <tr><th>{{ t('common.name') }}</th><th>{{ t('common.actions') }}</th></tr>
+          </thead>
+          <tbody>
+            @for (cat of categories(); track cat.id) {
+              <tr [class.selected]="selectedCategoryId() === cat.id" (click)="selectCategory(cat.id)">
+                <td>{{ cat.name }}</td>
+                <td class="actions">
+                  <button class="btn btn-sm btn-danger" (click)="deleteCategory(cat, $event)" [title]="t('common.delete')">&#128465;</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    @if (selectedCategoryId() !== null) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ t('taxes.detailTitle') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="closeDetail()">&#x2715;</button>
+        </div>
+
+        @if (loadingDetail()) {
+          <div class="empty">{{ t('common.loading') }}</div>
+        } @else if (selectedCategory(); as cat) {
+          <label class="field-label">
+            {{ t('common.name') }}
+            <div class="field-row">
+              <input [ngModel]="renameValue()" (ngModelChange)="renameValue.set($event)" class="filter-input field-full" />
+              <button class="btn btn-primary btn-sm" (click)="saveRename()" [disabled]="!renameValue().trim()">{{ t('common.save') }}</button>
+            </div>
+          </label>
+
+          <h3>{{ t('taxes.rateHistory') }}</h3>
+          @if (cat.rates.length === 0) {
+            <div class="empty">{{ t('taxes.noRates') }}</div>
+          } @else {
+            <ul class="rate-list">
+              @for (rate of cat.rates; track rate.id) {
+                <li>
+                  <span class="rate-info">
+                    <span class="rate-pct">{{ rate.rate * 100 }}%</span>
+                    <span class="rate-name">{{ rate.name }}</span>
+                    <span class="rate-date">{{ t('taxes.validFrom') }} {{ rate.validFrom }}</span>
+                  </span>
+                  <span class="attr-actions">
+                    <button class="btn btn-sm btn-secondary" (click)="startEditRate(rate)" [title]="t('common.edit')">&#9998;</button>
+                    <button class="btn btn-sm btn-danger" (click)="deleteRate(rate)" [title]="t('common.delete')">&#128465;</button>
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+
+          <div class="rate-form">
+            <h3>{{ editingRateId() ? t('taxes.editRate') : t('taxes.newRate') }}</h3>
+            <div class="field-row">
+              <label class="field-label">
+                {{ t('common.name') }}
+                <input [ngModel]="rateForm().name" (ngModelChange)="updateRateForm('name', $event)" class="filter-input" />
+              </label>
+              <label class="field-label">
+                {{ t('taxes.ratePercent') }}
+                <input type="number" step="0.01" [ngModel]="rateForm().rate" (ngModelChange)="updateRateForm('rate', +$event)" class="filter-input" />
+              </label>
+              <label class="field-label">
+                {{ t('taxes.validFromLabel') }}
+                <input type="date" [ngModel]="rateForm().validFrom" (ngModelChange)="updateRateForm('validFrom', $event)" class="filter-input" />
+              </label>
+            </div>
+            <div class="field-row">
+              <button class="btn btn-primary btn-sm" (click)="saveRate()" [disabled]="!rateForm().name.trim() || !rateForm().validFrom">
+                {{ editingRateId() ? t('common.save') : t('common.add') }}
+              </button>
+              @if (editingRateId()) {
+                <button class="btn btn-secondary btn-sm" (click)="cancelRateForm()">{{ t('common.cancel') }}</button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

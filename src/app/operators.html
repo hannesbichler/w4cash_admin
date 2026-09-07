@@ -1,0 +1,186 @@
+<div class="op-view">
+  <div class="toolbar">
+    <button (click)="load()" class="btn btn-secondary">&#8635; {{ t('common.refresh') }}</button>
+    <button (click)="startCreateRole()" class="btn btn-secondary">{{ t('operators.newRole') }}</button>
+    <button (click)="startCreatePerson()" class="btn btn-primary">{{ t('operators.new') }}</button>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="content">
+    <div class="list-panel">
+      <div class="section-header">
+        <div class="section-title">
+          {{ t('operators.rolesTitle') }}
+          <span class="section-count">{{ roles().length }}</span>
+        </div>
+        <button type="button" class="collapse-button" (click)="toggleRoles()"
+                [attr.aria-expanded]="!rolesCollapsed()"
+                [title]="rolesCollapsed() ? t('common.expand') : t('common.collapse')">
+          {{ rolesCollapsed() ? t('common.expand') : t('common.collapse') }}
+          <span class="caret">{{ rolesCollapsed() ? '▸' : '▾' }}</span>
+        </button>
+      </div>
+
+      @if (!rolesCollapsed()) {
+        @if (loading()) {
+          <div class="empty">{{ t('common.loading') }}</div>
+        } @else if (roles().length === 0) {
+          <div class="empty">{{ t('operators.noRoles') }}</div>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>{{ t('common.name') }}</th>
+                <th>{{ t('operators.heldBy') }}</th>
+                <th>{{ t('common.actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (role of roles(); track role.id_) {
+                <tr [class.selected]="roleFilter() === role.id_" (click)="selectRole(role)">
+                  <td>{{ role.name }}</td>
+                  <td>{{ personCount(role.id_) }}</td>
+                  <td class="actions">
+                    <button class="btn btn-sm btn-primary" (click)="$event.stopPropagation(); startEditRole(role)" [title]="t('common.edit')">&#9998;</button>
+                    <button class="btn btn-sm btn-danger" (click)="removeRole(role, $event)" [title]="t('common.delete')">&#128465;</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p class="field-hint">{{ t('operators.rolesHint') }}</p>
+        }
+      }
+
+      <div class="persons-section">
+        <div class="section-header">
+          <div class="section-title">
+            {{ t('operators.title') }}
+            <span class="section-count">{{ visiblePersons().length }}</span>
+            @if (roleFilter(); as roleId) {
+              <span class="section-note">{{ roleName(roleId) }}</span>
+            }
+          </div>
+          <div class="section-actions">
+            @if (roleFilter() !== null) {
+              <button class="btn btn-secondary btn-sm" (click)="roleFilter.set(null)">{{ t('operators.showAll') }}</button>
+            }
+            <button type="button" class="collapse-button" (click)="togglePersons()"
+                    [attr.aria-expanded]="!personsCollapsed()"
+                    [title]="personsCollapsed() ? t('common.expand') : t('common.collapse')">
+              {{ personsCollapsed() ? t('common.expand') : t('common.collapse') }}
+              <span class="caret">{{ personsCollapsed() ? '▸' : '▾' }}</span>
+            </button>
+          </div>
+        </div>
+
+        @if (!personsCollapsed()) {
+          @if (loading()) {
+            <div class="empty">{{ t('common.loading') }}</div>
+          } @else if (visiblePersons().length === 0) {
+            <div class="empty">{{ t('operators.none') }}</div>
+          } @else {
+            <table>
+              <thead>
+                <tr>
+                  <th>{{ t('common.name') }}</th>
+                  <th>{{ t('operators.role') }}</th>
+                  <th>{{ t('operators.card') }}</th>
+                  <th>{{ t('operators.pin') }}</th>
+                  <th>{{ t('common.actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (person of visiblePersons(); track person.id_) {
+                  <tr [class.selected]="editingPersonId() === person.id_" (click)="startEditPerson(person, $event)">
+                    <td>{{ person.name }}</td>
+                    <td>{{ roleName(person.role) }}</td>
+                    <td class="card-cell">{{ person.card || '—' }}</td>
+                    <td>
+                      @if (hasPin(person)) {
+                        <span class="badge ok">{{ t('operators.pinSet') }}</span>
+                      } @else {
+                        <span class="badge err">{{ t('operators.pinNone') }}</span>
+                      }
+                    </td>
+                    <td class="actions">
+                      <button class="btn btn-sm btn-primary" (click)="startEditPerson(person, $event)" [title]="t('common.edit')">&#9998;</button>
+                      <button class="btn btn-sm btn-danger" (click)="removePerson(person, $event)" [title]="t('common.delete')">&#128465;</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <p class="field-hint">{{ t('operators.pinHint') }}</p>
+          }
+        }
+      </div>
+    </div>
+
+    @if (panel() === 'role') {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ editingRoleId() === null ? t('operators.newRoleTitle') : t('operators.editRoleTitle') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="closePanel()">&#x2715;</button>
+        </div>
+
+        <label class="field-label">
+          {{ t('common.name') }} *
+          <input [ngModel]="roleForm().name" (ngModelChange)="updateRoleForm($event)" class="filter-input field-full" />
+        </label>
+
+        @if (editingRoleId(); as roleId) {
+          <p class="field-hint">{{ t('operators.roleHeldBy', { count: personCount(roleId) }) }}</p>
+        }
+
+        <p class="field-hint">{{ t('operators.roleHint') }}</p>
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="saveRole()" [disabled]="saving()">
+            @if (saving()) { {{ t('common.saving') }} } @else { {{ t('common.save') }} }
+          </button>
+          <button class="btn btn-secondary" (click)="closePanel()">{{ t('common.cancel') }}</button>
+        </div>
+      </div>
+    } @else if (panel() === 'person') {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ editingPersonId() === null ? t('operators.newTitle') : t('operators.editTitle') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="closePanel()">&#x2715;</button>
+        </div>
+
+        <label class="field-label">
+          {{ t('common.name') }} *
+          <input [ngModel]="personForm().name" (ngModelChange)="updatePersonForm('name', $event)" class="filter-input field-full" />
+        </label>
+
+        <label class="field-label">
+          {{ t('operators.role') }} *
+          <select [ngModel]="personForm().role" (ngModelChange)="updatePersonForm('role', $event)" class="filter-select field-full">
+            <option value="">—</option>
+            @for (role of roles(); track role.id_) {
+              <option [value]="role.id_">{{ role.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field-label">
+          {{ t('operators.card') }}
+          <input [ngModel]="personForm().card" (ngModelChange)="onCardChange($event)" class="filter-input field-full" />
+        </label>
+
+        <p class="field-hint">{{ t('operators.cardHint') }}</p>
+        <p class="field-hint">{{ t('operators.pinHint') }}</p>
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="savePerson()" [disabled]="saving()">
+            @if (saving()) { {{ t('common.saving') }} } @else { {{ t('common.save') }} }
+          </button>
+          <button class="btn btn-secondary" (click)="closePanel()">{{ t('common.cancel') }}</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

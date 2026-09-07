@@ -1,0 +1,277 @@
+<div class="floor-view">
+  <div class="toolbar">
+    <button (click)="load()" class="btn btn-secondary">&#8635; {{ t('common.refresh') }}</button>
+    <button (click)="startCreateFloor()" class="btn btn-primary">{{ t('floors.new') }}</button>
+    <button (click)="exportFloorsAndTables()" class="btn btn-secondary">Export XLSX</button>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="content">
+    <div class="list-panel">
+      <div class="section-header">
+        <div class="section-title">
+          {{ t('floors.title') }}
+          <span class="section-count">{{ floors().length }}</span>
+          @if (selectedFloorId() !== null) {
+            <span class="section-note">{{ floorName(selectedFloorId()) }}</span>
+          }
+        </div>
+        <button type="button" class="collapse-button" (click)="toggleFloors()"
+                [attr.aria-expanded]="!floorsCollapsed()"
+                [title]="floorsCollapsed() ? t('common.expand') : t('common.collapse')">
+          {{ floorsCollapsed() ? t('common.expand') : t('common.collapse') }}
+          <span class="caret">{{ floorsCollapsed() ? '▸' : '▾' }}</span>
+        </button>
+      </div>
+
+      @if (!floorsCollapsed()) {
+        @if (loading()) {
+          <div class="empty">{{ t('common.loading') }}</div>
+        } @else if (floors().length === 0) {
+          <div class="empty">{{ t('floors.none') }}</div>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>{{ t('common.name') }}</th>
+                <th>{{ t('floors.sortOrder') }}</th>
+                <th>{{ t('common.actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (floor of floors(); track floor.id_) {
+                <tr [class.selected]="selectedFloorId() === floor.id_" (click)="selectFloor(floor)">
+                  <td>{{ floor.name }}</td>
+                  <td>{{ floor.sortOrder ?? '—' }}</td>
+                  <td class="actions">
+                    <button class="btn btn-sm btn-primary" (click)="$event.stopPropagation(); startEditFloor(floor)" [title]="t('common.edit')">&#9998;</button>
+                    <button class="btn btn-sm btn-danger" (click)="removeFloor(floor, $event)" [title]="t('common.delete')">&#128465;</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      @if (selectedFloorId() !== null) {
+        <div class="tables-section">
+          <div class="section-header">
+            <div class="section-title">
+              {{ t('floors.tablesTitle') }}
+              <span class="section-count">{{ places().length }}</span>
+              @if (editingPlaceId(); as placeId) {
+                <span class="section-note">{{ placeName(placeId) }}</span>
+              }
+            </div>
+            <div class="section-actions">
+              <button class="btn btn-primary btn-sm" (click)="startCreatePlace()">{{ t('floors.newTable') }}</button>
+              <button type="button" class="collapse-button" (click)="togglePlaces()"
+                      [attr.aria-expanded]="!placesCollapsed()"
+                      [title]="placesCollapsed() ? t('common.expand') : t('common.collapse')">
+                {{ placesCollapsed() ? t('common.expand') : t('common.collapse') }}
+                <span class="caret">{{ placesCollapsed() ? '▸' : '▾' }}</span>
+              </button>
+            </div>
+          </div>
+
+          @if (!placesCollapsed()) {
+            @if (loadingPlaces()) {
+              <div class="empty">{{ t('common.loading') }}</div>
+            } @else if (places().length === 0) {
+              <div class="empty">{{ t('floors.noTables') }}</div>
+            } @else {
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ t('common.name') }}</th>
+                    <th>{{ t('floors.position') }}</th>
+                    <th>{{ t('floors.size') }}</th>
+                    <th>{{ t('floors.font') }}</th>
+                    <th>{{ t('common.actions') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (place of places(); track place.id_) {
+                    <tr [class.selected]="editingPlaceId() === place.id_" (click)="startEditPlace(place, $event)">
+                      <td>{{ place.name }}</td>
+                      <td>{{ place.x }} / {{ place.y }}</td>
+                      <td>
+                        @if (place.width !== null || place.height !== null) {
+                          {{ place.width ?? '—' }} × {{ place.height ?? '—' }}
+                        } @else {
+                          {{ t('floors.defaultSize') }}
+                        }
+                      </td>
+                      <td>
+                        {{ place.fontSize ?? '—' }}
+                        @if (place.fontColor) {
+                          <span class="color-dot" [style.background]="place.fontColor"></span>
+                        }
+                      </td>
+                      <td class="actions">
+                        <button class="btn btn-sm btn-primary" (click)="startEditPlace(place, $event)" [title]="t('common.edit')">&#9998;</button>
+                        <button class="btn btn-sm btn-danger" (click)="removePlace(place, $event)" [title]="t('common.delete')">&#128465;</button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+            <p class="field-hint">{{ t('floors.tablesHint') }}</p>
+          }
+        </div>
+
+        <div class="plan-section">
+          <div class="section-header">
+            <div class="section-title">
+              {{ t('floors.plan') }}
+            </div>
+            <button type="button" class="collapse-button" (click)="togglePlan()"
+                    [attr.aria-expanded]="!planCollapsed()"
+                    [title]="planCollapsed() ? t('common.expand') : t('common.collapse')">
+              {{ planCollapsed() ? t('common.expand') : t('common.collapse') }}
+              <span class="caret">{{ planCollapsed() ? '▸' : '▾' }}</span>
+            </button>
+          </div>
+
+          @if (!planCollapsed()) {
+            @if (plan().tables.length === 0) {
+              <div class="empty">{{ t('floors.noTables') }}</div>
+            } @else {
+              <div class="plan-wrap" #planWrap>
+              <svg #planSvg class="floor-plan" [attr.viewBox]="plan().viewBox" preserveAspectRatio="xMidYMid meet">
+                @for (table of plan().tables; track table.place.id_) {
+                  <g class="plan-table" [class.selected]="editingPlaceId() === table.place.id_"
+                     (pointerdown)="startMove(table, $event)"
+                     (pointermove)="onDragMove($event)"
+                     (pointerup)="endDrag($event)"
+                     (pointercancel)="cancelDrag($event)"
+                     (contextmenu)="openPlanMenu(table, $event)">
+                    <rect [attr.x]="table.x" [attr.y]="table.y"
+                          [attr.width]="table.width" [attr.height]="table.height" rx="6" />
+                    <text [attr.x]="table.x + table.width / 2"
+                          [attr.y]="table.y + table.height / 2"
+                          [attr.font-size]="table.fontSize" [attr.fill]="table.fontColor"
+                          text-anchor="middle" dominant-baseline="middle">{{ table.place.name }}</text>
+                    <rect class="plan-handle"
+                          [attr.x]="table.x + table.width - handleSize"
+                          [attr.y]="table.y + table.height - handleSize"
+                          [attr.width]="handleSize" [attr.height]="handleSize" rx="3"
+                          (pointerdown)="startResize(table, $event)" />
+                  </g>
+                }
+              </svg>
+
+              @if (planMenu(); as menu) {
+                <div class="plan-menu" role="menu" [style.left.px]="menu.x" [style.top.px]="menu.y"
+                     (contextmenu)="$event.preventDefault()">
+                  <div class="plan-menu-title">{{ menu.place.name }}</div>
+                  <button type="button" role="menuitem" class="plan-menu-item danger"
+                          (click)="deleteFromPlanMenu(menu.place, $event)">
+                    &#128465; {{ t('common.delete') }}
+                  </button>
+                </div>
+              }
+              </div>
+              <p class="field-hint">{{ t('floors.planHint') }}</p>
+            }
+          }
+        </div>
+      }
+    </div>
+
+    @if (panel() === 'floor') {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ editingFloorId() === null ? t('floors.newTitle') : t('floors.editTitle') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="closePanel()">&#x2715;</button>
+        </div>
+
+        <label class="field-label">
+          {{ t('common.name') }} *
+          <input [ngModel]="floorForm().name" (ngModelChange)="updateFloorForm('name', $event)" class="filter-input field-full" />
+        </label>
+
+        <label class="field-label">
+          {{ t('floors.sortOrder') }}
+          <input type="number" step="1" [ngModel]="floorForm().sortOrder" (ngModelChange)="onSortOrderChange($event)" class="filter-input field-full" />
+        </label>
+
+        <p class="field-hint">{{ t('floors.sortOrderHint') }}</p>
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="saveFloor()" [disabled]="saving()">
+            @if (saving()) { {{ t('common.saving') }} } @else { {{ t('common.save') }} }
+          </button>
+          <button class="btn btn-secondary" (click)="closePanel()">{{ t('common.cancel') }}</button>
+        </div>
+      </div>
+    } @else if (panel() === 'place') {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ editingPlaceId() === null ? t('floors.newTableTitle') : t('floors.editTableTitle') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="closePanel()">&#x2715;</button>
+        </div>
+
+        <label class="field-label">
+          {{ t('common.name') }} *
+          <input [ngModel]="placeForm().name" (ngModelChange)="updatePlaceForm('name', $event)" class="filter-input field-full" />
+        </label>
+
+        <label class="field-label">
+          {{ t('floors.floor') }}
+          <select [ngModel]="placeForm().floorId" (ngModelChange)="updatePlaceForm('floorId', $event)" class="filter-select field-full">
+            @for (floor of floors(); track floor.id_) {
+              <option [value]="floor.id_">{{ floor.name }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="field-row">
+          <label class="field-label">
+            X
+            <input type="number" step="1" [ngModel]="placeForm().x" (ngModelChange)="onPlaceCoordinateChange('x', $event)" class="filter-input" />
+          </label>
+          <label class="field-label">
+            Y
+            <input type="number" step="1" [ngModel]="placeForm().y" (ngModelChange)="onPlaceCoordinateChange('y', $event)" class="filter-input" />
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label class="field-label">
+            {{ t('floors.width') }}
+            <input type="number" step="1" [ngModel]="placeForm().width" (ngModelChange)="onPlaceNumberChange('width', $event)" class="filter-input" />
+          </label>
+          <label class="field-label">
+            {{ t('floors.height') }}
+            <input type="number" step="1" [ngModel]="placeForm().height" (ngModelChange)="onPlaceNumberChange('height', $event)" class="filter-input" />
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label class="field-label">
+            {{ t('floors.fontSize') }}
+            <input type="number" step="1" [ngModel]="placeForm().fontSize" (ngModelChange)="onPlaceNumberChange('fontSize', $event)" class="filter-input" />
+          </label>
+          <label class="field-label">
+            {{ t('floors.fontColor') }}
+            <input [ngModel]="placeForm().fontColor" (ngModelChange)="updatePlaceForm('fontColor', $event)" placeholder="#1a1a2e" class="filter-input" />
+          </label>
+        </div>
+
+        <p class="field-hint">{{ t('floors.tableFieldsHint') }}</p>
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="savePlace()" [disabled]="saving()">
+            @if (saving()) { {{ t('common.saving') }} } @else { {{ t('common.save') }} }
+          </button>
+          <button class="btn btn-secondary" (click)="closePanel()">{{ t('common.cancel') }}</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,145 @@
+<div class="as-view">
+  <div class="toolbar">
+    <input [ngModel]="newSetName()" (ngModelChange)="newSetName.set($event)" [placeholder]="t('attributeSets.newName')" class="filter-input" (keydown.enter)="createSet()" />
+    <button class="btn btn-primary" (click)="createSet()" [disabled]="!newSetName().trim()">{{ t('attributeSets.new') }}</button>
+    <button class="btn btn-secondary" (click)="loadSets()">&#8635; {{ t('common.refresh') }}</button>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="content">
+    <div class="list-panel">
+      @if (loadingSets()) {
+        <div class="empty">{{ t('common.loading') }}</div>
+      } @else if (sets().length === 0) {
+        <div class="empty">{{ t('attributeSets.none') }}</div>
+      } @else {
+        <table>
+          <thead>
+            <tr><th>{{ t('common.name') }}</th><th>{{ t('common.actions') }}</th></tr>
+          </thead>
+          <tbody>
+            @for (set of sets(); track set.id) {
+              <tr [class.selected]="selectedSetId() === set.id" (click)="selectSet(set.id)">
+                <td>{{ set.name }}</td>
+                <td class="actions">
+                  <button class="btn btn-sm btn-danger" (click)="deleteSet(set, $event)" [title]="t('common.delete')">&#128465;</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    @if (selectedSetId() !== null) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ t('attributeSets.detailTitle') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="closeDetail()">&#x2715;</button>
+        </div>
+
+        @if (loadingDetail()) {
+          <div class="empty">{{ t('common.loading') }}</div>
+        } @else if (selectedSet(); as set) {
+          <label class="field-label">
+            {{ t('common.name') }}
+            <div class="field-row">
+              <input [ngModel]="renameValue()" (ngModelChange)="renameValue.set($event)" class="filter-input field-full" />
+              <button class="btn btn-primary btn-sm" (click)="saveRename()" [disabled]="!renameValue().trim()">{{ t('common.save') }}</button>
+            </div>
+          </label>
+
+          <h3>{{ t('attributeSets.inThisSet') }}</h3>
+          @if (set.attributes.length === 0) {
+            <div class="empty">{{ t('attributeSets.noneLinked') }}</div>
+          } @else {
+            <ul class="attr-list">
+              @for (use of set.attributes; track use.attributeId; let i = $index) {
+                <li>
+                  <span class="attr-name">{{ use.name }}</span>
+                  <span class="attr-actions">
+                    <button class="btn btn-sm btn-secondary" (click)="moveAttribute(i, -1)" [disabled]="i === 0" [title]="t('common.moveUp')">&#8593;</button>
+                    <button class="btn btn-sm btn-secondary" (click)="moveAttribute(i, 1)" [disabled]="i === set.attributes.length - 1" [title]="t('common.moveDown')">&#8595;</button>
+                    <button class="btn btn-sm btn-danger" (click)="removeAttributeFromSet(use.attributeId)" [title]="t('attributeSets.removeFromSet')">&#128465;</button>
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+
+          <div class="field-row">
+            <select [ngModel]="attributeToAdd()" (ngModelChange)="attributeToAdd.set($event)" class="filter-select field-full">
+              <option value="">{{ t('attributeSets.selectToAdd') }}</option>
+              @for (attr of availableToAdd(); track attr.id) {
+                <option [value]="attr.id">{{ attr.name }}</option>
+              }
+            </select>
+            <button class="btn btn-primary btn-sm" (click)="addAttributeToSet()" [disabled]="!attributeToAdd()">{{ t('common.add') }}</button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="attrs-master">
+    <div class="attrs-master-list">
+      <h3>{{ t('attributeSets.allAttributes') }}</h3>
+      <div class="field-row">
+        <input [ngModel]="newAttributeName()" (ngModelChange)="newAttributeName.set($event)" [placeholder]="t('attributeSets.newAttributeName')" class="filter-input" (keydown.enter)="createAttribute()" />
+        <button class="btn btn-primary btn-sm" (click)="createAttribute()" [disabled]="!newAttributeName().trim()">{{ t('attributeSets.newAttribute') }}</button>
+      </div>
+      @if (attributes().length === 0) {
+        <div class="empty">{{ t('attributeSets.noAttributes') }}</div>
+      } @else {
+        <div class="attr-chips">
+          @for (attr of attributes(); track attr.id) {
+            <span class="attr-chip" [class.selected]="selectedAttributeId() === attr.id" (click)="selectAttributeForValues(attr)">
+              {{ attr.name }}
+              <button class="chip-btn" (click)="$event.stopPropagation(); renameAttribute(attr)" [title]="t('common.rename')">&#9998;</button>
+              <button class="chip-btn" (click)="$event.stopPropagation(); deleteAttribute(attr)" [title]="t('common.delete')">&#x2715;</button>
+            </span>
+          }
+        </div>
+        <div class="empty">{{ t('attributeSets.clickHint') }}</div>
+      }
+    </div>
+
+    @if (selectedAttributeId() !== null) {
+      <div class="values-panel">
+        <div class="detail-header">
+          <h3>{{ t('attributeSets.allowedValues') }}</h3>
+          <button class="btn btn-secondary btn-sm" (click)="closeValues()">&#x2715;</button>
+        </div>
+
+        @if (loadingValues()) {
+          <div class="empty">{{ t('common.loading') }}</div>
+        } @else {
+          @if (attributeValues().length === 0) {
+            <div class="empty">{{ t('attributeSets.noValues') }}</div>
+          } @else {
+            <ul class="attr-list">
+              @for (val of attributeValues(); track val.id; let i = $index) {
+                <li>
+                  <span class="attr-name">{{ val.value }}</span>
+                  <span class="attr-actions">
+                    <button class="btn btn-sm btn-secondary" (click)="moveAttributeValue(i, -1)" [disabled]="i === 0" [title]="t('common.moveUp')">&#8593;</button>
+                    <button class="btn btn-sm btn-secondary" (click)="moveAttributeValue(i, 1)" [disabled]="i === attributeValues().length - 1" [title]="t('common.moveDown')">&#8595;</button>
+                    <button class="btn btn-sm btn-secondary" (click)="renameAttributeValue(val)" [title]="t('common.rename')">&#9998;</button>
+                    <button class="btn btn-sm btn-danger" (click)="removeAttributeValue(val)" [title]="t('common.delete')">&#128465;</button>
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+
+          <div class="field-row">
+            <input [ngModel]="newValueText()" (ngModelChange)="newValueText.set($event)" [placeholder]="t('attributeSets.newValue')" class="filter-input" (keydown.enter)="addAttributeValue()" />
+            <button class="btn btn-primary btn-sm" (click)="addAttributeValue()" [disabled]="!newValueText().trim()">{{ t('common.add') }}</button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

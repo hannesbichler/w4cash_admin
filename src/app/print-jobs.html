@@ -1,0 +1,127 @@
+<div class="pj-view">
+  <div class="toolbar">
+    <input [ngModel]="tableFilter()" (ngModelChange)="onTextFilterChange(tableFilter.set.bind(tableFilter), $event)" [placeholder]="t('printJobs.filterTable')" class="filter-input" />
+    <select [ngModel]="personFilter()" (ngModelChange)="onPersonFilterChange($event)" class="filter-select">
+      <option value="">{{ t('printJobs.allPersons') }}</option>
+      @for (name of personNames(); track name) {
+        <option [value]="name">{{ name }}</option>
+      }
+    </select>
+    <select [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)" class="filter-select">
+      <option value="all">{{ t('printJobs.allStatuses') }}</option>
+      <option value="ok">{{ t('printJobs.okOnly') }}</option>
+      <option value="fail">{{ t('printJobs.failOnly') }}</option>
+    </select>
+    <select class="filter-select" [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)">
+      @for (n of pageSizeOptions; track n) {
+        <option [value]="n">{{ n }} {{ t('printJobs.perPage') }}</option>
+      }
+    </select>
+    <button (click)="load()" class="btn btn-secondary">&#8635; {{ t('common.refresh') }}</button>
+    <label class="auto-refresh-label">
+      <input type="checkbox" [checked]="autoRefresh()" (change)="toggleAutoRefresh($any($event.target).checked)" />
+      {{ t('printJobs.autoRefresh') }}
+    </label>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="content">
+    <div class="list-panel">
+      <div class="pagination">
+        <button class="btn btn-secondary btn-sm" (click)="prevPage()" [disabled]="page() === 0">&#8592; {{ t('printJobs.previous') }}</button>
+        <span class="page-info">{{ t('printJobs.page') }} {{ page() + 1 }}</span>
+        <button class="btn btn-secondary btn-sm" (click)="nextPage()" [disabled]="!hasNextPage()">{{ t('printJobs.next') }} &#8594;</button>
+      </div>
+      @if (loading()) {
+        <div class="empty">{{ t('common.loading') }}</div>
+      } @else if (jobs().length === 0) {
+        <div class="empty">{{ t('printJobs.none') }}</div>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{{ t('printJobs.table') }}</th>
+              <th>{{ t('printJobs.person') }}</th>
+              <th>{{ t('printJobs.printer') }}</th>
+              <th>{{ t('printJobs.lines') }}</th>
+              <th>{{ t('printJobs.printedAt') }}</th>
+              <th>{{ t('common.status') }}</th>
+              <th>{{ t('common.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (job of jobs(); track job.id) {
+              <tr [class.selected]="selected()?.id === job.id" (click)="select(job)">
+                <td>{{ job.id }}</td>
+                <td>{{ job.tableName || job.tableId }}</td>
+                <td>{{ job.personName || '—' }}</td>
+                <td>{{ job.printerName }}</td>
+                <td>{{ job.lineCount }}</td>
+                <td>{{ job.printedAt | date:'dd.MM.yy HH:mm:ss' }}</td>
+                <td>
+                  @if (job.success) {
+                    <span class="badge ok">{{ t('printJobs.ok') }}</span>
+                  } @else {
+                    <span class="badge err" [title]="job.error ?? ''">{{ t('printJobs.fail') }}</span>
+                  }
+                </td>
+                <td class="actions">
+                  <button class="btn btn-sm btn-primary" (click)="reprint(job, $event)" [title]="t('printJobs.reprint')">&#128438;</button>
+                  <button class="btn btn-sm btn-danger" (click)="remove(job, $event)" [title]="t('common.delete')">&#128465;</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    @if (selected(); as job) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ t('printJobs.job') }} #{{ job.id }} — {{ job.tableName || job.tableId }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="selected.set(null)">&#x2715;</button>
+        </div>
+        <dl>
+          <dt>{{ t('printJobs.tableId') }}</dt><dd>{{ job.tableId }}</dd>
+          @if (job.personName) {
+            <dt>{{ t('printJobs.person') }}</dt><dd>{{ job.personName }}@if (job.personId) { <span class="person-id">({{ job.personId }})</span> }</dd>
+          }
+          <dt>{{ t('printJobs.printer') }}</dt><dd>{{ job.printerName }} ({{ t('printJobs.index') }} {{ job.printerIndex }})</dd>
+          <dt>{{ t('printJobs.lines') }}</dt><dd>{{ job.lineCount }}</dd>
+          <dt>{{ t('printJobs.printedAt') }}</dt><dd>{{ job.printedAt | date:'dd.MM.yyyy HH:mm:ss' }}</dd>
+          <dt>{{ t('common.status') }}</dt>
+          <dd>
+            @if (job.success) {
+              <span class="badge ok">{{ t('printJobs.success') }}</span>
+            } @else {
+              <span class="badge err">{{ t('printJobs.failed') }}</span>
+            }
+          </dd>
+          @if (!job.success && job.error) {
+            <dt>{{ t('printJobs.error') }}</dt><dd class="error-text">{{ job.error }}</dd>
+          }
+        </dl>
+        @if (job.content) {
+          <h3>{{ t('printJobs.ticketContent') }}</h3>
+          <div class="ticket">
+            @for (seg of ticketSegments(job.content); track $index) {
+              @if (seg.kind === 'divider') {
+                <div class="t-divider"></div>
+              } @else {
+                <div [class]="'t-' + seg.kind">{{ seg.text }}</div>
+              }
+            }
+          </div>
+        }
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="reprint(job, $event)">&#128438; {{ t('printJobs.reprint') }}</button>
+          <button class="btn btn-danger" (click)="remove(job, $event)">&#128465; {{ t('common.delete') }}</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

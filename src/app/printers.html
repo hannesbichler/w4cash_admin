@@ -1,0 +1,30 @@
+<div class="printers-view">
+  <div class="toolbar">
+    <button class="btn btn-secondary" (click)="load()">&#8635; {{ t('common.refresh') }}</button>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="empty">{{ t('common.loading') }}</div>
+  } @else {
+    <div class="slots">
+      @for (slot of slots(); track slot.slot) {
+        <div class="slot-card">
+          <h3>{{ slotLabel(slot.slot) }}</h3>
+          <select [ngModel]="pendingSelection()[slot.slot]" (ngModelChange)="onSelectionChange(slot.slot, $event)" class="filter-select field-full">
+            <option value="Not defined">{{ t('printers.notDefined') }}</option>
+            @for (name of installedPrinters(); track name) {
+              <option [value]="name">{{ name }}</option>
+            }
+          </select>
+          <div class="slot-current">{{ t('printers.current') }}: {{ slot.printerName || t('printers.notDefined') }}</div>
+          <button class="btn btn-primary btn-sm" (click)="save(slot)" [disabled]="saving()[slot.slot] || !isDirty(slot)">
+            @if (saving()[slot.slot]) { {{ t('common.saving') }} } @else { {{ t('common.save') }} }
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

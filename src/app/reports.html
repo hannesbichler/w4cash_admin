@@ -1,0 +1,65 @@
+<div class="reports-view">
+  <div class="toolbar">
+    <label class="btn btn-primary upload-btn">
+      @if (uploading()) { {{ t('reports.uploading') }} } @else { {{ t('reports.upload') }} }
+      <input type="file" accept=".jrxml" (change)="onFileSelected($event)" [disabled]="uploading()" hidden />
+    </label>
+    <button class="btn btn-secondary" (click)="load()">&#8635; {{ t('common.refresh') }}</button>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="content">
+    <div class="list-panel">
+      @if (loading()) {
+        <div class="empty">{{ t('common.loading') }}</div>
+      } @else if (reports().length === 0) {
+        <div class="empty">{{ t('reports.none') }}</div>
+      } @else {
+        <table>
+          <thead>
+            <tr><th>{{ t('common.name') }}</th><th>{{ t('reports.parameters') }}</th><th>{{ t('common.actions') }}</th></tr>
+          </thead>
+          <tbody>
+            @for (report of reports(); track report.name) {
+              <tr [class.selected]="selectedReportName() === report.name" (click)="selectReport(report)">
+                <td>{{ report.name }}</td>
+                <td>{{ report.parameters.length }}</td>
+                <td class="actions">
+                  <button class="btn btn-sm btn-danger" (click)="deleteReport(report, $event)" [title]="t('common.delete')">&#128465;</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    @if (selectedReportName() !== null) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ selectedReportName() }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="closeDetail()">&#x2715;</button>
+        </div>
+
+        @if (selectedParameters().length === 0) {
+          <div class="empty">{{ t('reports.noParameters') }}</div>
+        } @else {
+          @for (p of selectedParameters(); track p.name) {
+            <label class="field-label">
+              {{ p.name }} ({{ p.type }})
+              <input [type]="inputTypeFor(p.type)" [ngModel]="paramValues()[p.name]" (ngModelChange)="updateParam(p.name, $event)" class="filter-input field-full" />
+            </label>
+          }
+        }
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="runReport()" [disabled]="running()">
+            @if (running()) { {{ t('reports.running') }} } @else { {{ t('reports.run') }} }
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

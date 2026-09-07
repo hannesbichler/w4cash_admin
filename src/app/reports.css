@@ -1,0 +1,22 @@
+.reports-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px 20px 0;
+}
+
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.upload-btn { cursor: pointer; display: inline-flex; align-items: center; }
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #7a8ab0;
+}
+
+.field-full { width: 100%; }

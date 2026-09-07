@@ -1,0 +1,202 @@
+.layout { display: flex; flex-direction: column; height: 100vh; }
+
+header {
+  background: #3a6fff;
+  color: #fff;
+  padding: 12px 20px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(58,111,255,.3);
+}
+
+header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spacing: .01em; }
+
+.main-nav { display: flex; gap: 4px; margin-top: 2px; }
+.main-nav > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #c7d8ff;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* The sprite only defines symbols; nothing in it is meant to render on its own. */
+.icon-sprite { display: none; }
+
+/* Drawn in the current text colour, so one symbol serves the blue bar, the white menus and the
+   active state. Held slightly back from the label so the words stay the loudest thing in a row. */
+.nav-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .72;
+}
+
+.main-nav > a:hover .nav-icon,
+.nav-group-toggle:hover .nav-icon,
+.side-nav a:hover .nav-icon,
+.main-nav > a.active .nav-icon,
+.nav-group-toggle.active .nav-icon,
+.side-nav a.active .nav-icon { opacity: 1; }
+.main-nav > a:hover { background: rgba(255,255,255,.12); color: #fff; }
+.main-nav > a.active { background: rgba(255,255,255,.92); color: #3a6fff; }
+
+.header-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #c7d8ff;
+}
+.lang-switch select {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3a6fff;
+  background: rgba(255,255,255,.92);
+  cursor: pointer;
+}
+
+.account-menu-wrap {
+  position: relative;
+}
+
+.account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.4);
+  color: #fff;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 7px 12px;
+}
+
+.account-button:hover {
+  background: rgba(255,255,255,.22);
+}
+
+.account-label {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #dfe7ff;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(26, 26, 46, 0.12);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.dropdown-item {
+  border: none;
+  background: #fff;
+  color: #1a1a2e;
+  text-align: left;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: #f3f6ff;
+}
+
+/* The only nav control left: a toggle that opens its rail down the left. */
+.nav-group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: #c7d8ff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.nav-group-toggle:hover { background: rgba(255,255,255,.12); color: #fff; }
+.nav-group-toggle.active { background: rgba(255,255,255,.92); color: #3a6fff; }
+
+.nav-group-toggle .caret { font-size: 0.7rem; }
+
+/* --- body: the rail beside the routed screen -------------------------------------------- */
+
+.body { display: flex; flex: 1; overflow: hidden; }
+
+/* Column context for the routed component, which is what it had when it sat directly under
+   .layout - its own .*-view fills this the same way. */
+.view { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+.side-nav {
+  flex: none;
+  width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 10px;
+  overflow: auto;
+  background: #fff;
+  border-right: 1px solid #dde8ff;
+  box-shadow: 2px 0 10px rgba(58,111,255,.06);
+}
+
+.side-nav-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #7a8ab0;
+  padding: 0 12px 10px;
+}
+
+.side-nav a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #1a1a2e;
+  text-decoration: none;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.side-nav a:hover { background: #f0f4ff; color: #3a6fff; }
+.side-nav a.active { background: #e8f0ff; color: #3a6fff; }

@@ -1,0 +1,177 @@
+.floor-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px 20px 0;
+}
+
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #3a6fff;
+}
+
+/* Sits at the right end of the header and is sized like a real button, not a text link. */
+.collapse-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #e8f0ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3a6fff;
+  transition: opacity .15s, transform .1s;
+}
+.collapse-button:hover { opacity: .88; transform: translateY(-1px); }
+.collapse-button:active { transform: translateY(0); }
+
+.caret { font-size: 1rem; line-height: 1; }
+
+.section-count {
+  background: #e8f0ff;
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+}
+
+/* The floor whose tables are listed below, shown whether or not the list is collapsed. */
+.section-note {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.tables-section { margin-top: 20px; }
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-section { margin-top: 20px; padding-bottom: 16px; }
+
+/* The box the right-click menu is positioned inside, so its coordinates stay independent of
+   how far the page is scrolled. */
+.plan-wrap { position: relative; }
+
+.floor-plan {
+  width: 100%;
+  max-height: 440px;
+  background: #fff;
+  border: 1px solid #dde8ff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(58,111,255,.08);
+}
+
+/* touch-action keeps a touch drag from scrolling the panel instead of moving the table. */
+.plan-table { cursor: move; touch-action: none; }
+.plan-table rect {
+  fill: #e8f0ff;
+  stroke: #3a6fff;
+  stroke-width: 1;
+}
+.plan-table:hover rect { fill: #dde8ff; }
+.plan-table.selected rect { fill: #dde8ff; stroke-width: 3; }
+
+/* Bottom-right drag handle. touch-action keeps a touch drag from scrolling the panel. */
+.plan-handle {
+  fill: #3a6fff;
+  stroke: #fff;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: .55;
+}
+.plan-table:hover .plan-handle,
+.plan-table.selected .plan-handle { opacity: 1; }
+
+/* Right-click menu over the plan. Width and height are mirrored by PLAN_MENU_WIDTH and
+   PLAN_MENU_HEIGHT in floors.ts, which keep it inside the plan near an edge. */
+.plan-menu {
+  position: absolute;
+  z-index: 20;
+  width: 170px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #dde8ff;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(26,26,46,.18);
+}
+
+.plan-menu-title {
+  padding: 4px 8px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7392;
+  border-bottom: 1px solid #eef2ff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-menu-item {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-menu-item:hover { background: #f2f5ff; }
+.plan-menu-item.danger { color: #ff3a3a; }
+.plan-menu-item.danger:hover { background: #ffecec; }
+
+.color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid #dde8ff;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #7a8ab0;
+}
+
+.field-full { width: 100%; }
+
+.field-row { display: flex; gap: 10px; align-items: flex-end; }
+.field-row .field-label { flex: 1; }
+.field-row .filter-input { width: 100%; }
+
+.field-hint { font-size: 0.78rem; color: #7a8ab0; line-height: 1.5; }

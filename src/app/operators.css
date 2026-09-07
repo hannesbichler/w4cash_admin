@@ -1,0 +1,92 @@
+.op-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px 20px 0;
+}
+
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #3a6fff;
+}
+
+/* Sits at the right end of the header and is sized like a real button, not a text link. */
+.collapse-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #e8f0ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3a6fff;
+  transition: opacity .15s, transform .1s;
+}
+.collapse-button:hover { opacity: .88; transform: translateY(-1px); }
+.collapse-button:active { transform: translateY(0); }
+
+.caret { font-size: 1rem; line-height: 1; }
+
+.section-count {
+  background: #e8f0ff;
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+}
+
+/* The role the Bediener list is filtered to, shown next to its title. */
+.section-note {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.persons-section { margin-top: 20px; padding-bottom: 16px; }
+
+/* Card numbers are long digit strings; a monospace column keeps them scannable. */
+.card-cell {
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.82rem;
+  color: #5a6a9a;
+}
+
+.field-label {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #7a8ab0;
+}
+
+.field-full { width: 100%; }
+
+.field-hint { font-size: 0.78rem; color: #7a8ab0; line-height: 1.5; }

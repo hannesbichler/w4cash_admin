@@ -1,0 +1,251 @@
+<div class="prod-view">
+  <div class="toolbar">
+    <select [ngModel]="categoryFilter()" (ngModelChange)="onCategoryFilterChange($event)" class="filter-select">
+      <option value="">{{ t('products.allCategories') }}</option>
+      @for (cat of categories(); track cat.id_) {
+        <option [value]="cat.id_">{{ cat.name }}</option>
+      }
+    </select>
+    <button (click)="load()" class="btn btn-secondary">&#8635; {{ t('common.refresh') }}</button>
+    <button (click)="startCreate()" class="btn btn-primary">{{ t('products.new') }}</button>
+    <button (click)="startBulkInsert()" class="btn btn-secondary">&#8801; {{ t('products.bulkInsert') }}</button>
+    <button type="button" class="btn btn-secondary" (click)="fileInput.click()">Import XLSX</button>
+    <input #fileInput type="file" accept=".xlsx,.xls" hidden (change)="importProductsFromXlsx($event)" />
+    @if (selectedCount() > 0) {
+      <button (click)="exportSelectedProducts()" class="btn btn-secondary">Export XLSX</button>
+    }
+    @if (selectedCount() > 1) {
+      <button (click)="deleteSelected()" class="btn btn-danger" [disabled]="deleting()">
+        &#128465; {{ t('products.deleteSelected', { count: selectedCount() }) }}
+      </button>
+    }
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="content">
+    @if (!bulkOpen()) {
+      <div class="list-panel">
+        @if (loading()) {
+          <div class="empty">{{ t('common.loading') }}</div>
+        } @else if (products().length === 0) {
+          <div class="empty">{{ t('products.none') }}</div>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th class="select-cell">
+                  <input type="checkbox" [checked]="allSelected()" (click)="toggleAll($event)" [title]="t('products.selectAll')" />
+                </th>
+                <th><button type="button" class="sort-button" (click)="toggleSort('code')">{{ t('products.code') }} {{ sortIndicator('code') }}</button></th>
+                <th><button type="button" class="sort-button" (click)="toggleSort('name')">{{ t('common.name') }} {{ sortIndicator('name') }}</button></th>
+                <th><button type="button" class="sort-button" (click)="toggleSort('category')">{{ t('products.category') }} {{ sortIndicator('category') }}</button></th>
+                <th><button type="button" class="sort-button" (click)="toggleSort('pricesell')">{{ t('products.priceSell') }} {{ sortIndicator('pricesell') }}</button></th>
+                <th><button type="button" class="sort-button" (click)="toggleSort('priceInclTax')">{{ t('products.priceInclTax') }} {{ sortIndicator('priceInclTax') }}</button></th>
+                <th>{{ t('products.active') }}</th>
+                <th>{{ t('common.actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (product of sortedProducts(); track product.id_) {
+                <tr [class.selected]="editingId() === product.id_" (click)="startEdit(product)">
+                  <td class="select-cell">
+                  <input type="checkbox" [checked]="isSelected(product.id_)" (click)="toggleSelection(product.id_, $event)" />
+                </td>
+                <td>{{ product.code || '—' }}</td>
+                  <td>{{ product.name }}</td>
+                  <td>{{ categoryName(product.categoryId) }}</td>
+                  <td>{{ product.pricesell | number:'1.2-2' }}</td>
+                  <td>
+                    @if (priceInclTaxFor(product.pricesell, product.taxCatId); as gross) {
+                      {{ gross | number:'1.2-2' }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td>
+                    @if (product.active) {
+                      <span class="badge ok">{{ t('products.active') }}</span>
+                    } @else {
+                      <span class="badge err">{{ t('products.hidden') }}</span>
+                    }
+                  </td>
+                  <td class="actions">
+                    <button class="btn btn-sm btn-primary" (click)="$event.stopPropagation(); startEdit(product)" [title]="t('common.edit')">&#9998;</button>
+                    <button class="btn btn-sm btn-secondary" (click)="copyProduct(product, $event)" [title]="t('common.copy')">&#128203;</button>
+                    <button class="btn btn-sm btn-danger" (click)="remove(product, $event)" [title]="t('common.delete')">&#128465;</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
+
+    @if (bulkOpen()) {
+      <div class="detail-panel bulk-panel">
+        <div class="detail-header">
+          <h2>{{ t('bulk.title') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="cancelBulkInsert()">&#x2715;</button>
+        </div>
+
+        <p class="bulk-hint">
+          {{ t('bulk.hint') }}
+        </p>
+
+        <div class="bulk-grid-wrap">
+          <table class="bulk-grid">
+            <thead>
+              <tr>
+                <th>{{ t('common.name') }} *</th>
+                <th>{{ t('products.category') }}</th>
+                <th>{{ t('products.attributeSet') }}</th>
+                <th>{{ t('products.taxCategory') }}</th>
+                <th>{{ t('products.unit') }}</th>
+                <th>{{ t('products.priceBuy') }}</th>
+                <th>{{ t('products.priceSell') }}</th>
+                <th>{{ t('products.active') }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (draft of bulkDrafts(); track $index) {
+                <tr>
+                  <td><input [ngModel]="draft.name" (ngModelChange)="updateBulkDraft($index, 'name', $event)" class="filter-input grid-input grid-input-name" /></td>
+                  <td>
+                    <select [ngModel]="draft.categoryId" (ngModelChange)="updateBulkDraft($index, 'categoryId', $event)" class="filter-select grid-select">
+                      <option value="">—</option>
+                      @for (cat of categories(); track cat.id_) {
+                        <option [value]="cat.id_">{{ cat.name }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <select [ngModel]="draft.attributeSetId" (ngModelChange)="updateBulkDraft($index, 'attributeSetId', $event)" class="filter-select grid-select">
+                      <option value="">—</option>
+                      @for (set of attributeSets(); track set.id) {
+                        <option [value]="set.id">{{ set.name }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <select [ngModel]="draft.taxCatId" (ngModelChange)="updateBulkDraft($index, 'taxCatId', $event)" class="filter-select grid-select">
+                      <option value="">—</option>
+                      @for (cat of taxCategories(); track cat.id) {
+                        <option [value]="cat.id">{{ cat.name }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td><input [ngModel]="draft.unit" (ngModelChange)="updateBulkDraft($index, 'unit', $event)" class="filter-input grid-input grid-input-unit" /></td>
+                  <td><input type="number" step="0.01" [ngModel]="draft.priceBuy" (ngModelChange)="updateBulkDraft($index, 'priceBuy', +$event)" class="filter-input grid-input grid-input-price" /></td>
+                  <td><input type="number" step="0.01" [ngModel]="draft.pricesell" (ngModelChange)="updateBulkDraft($index, 'pricesell', +$event)" class="filter-input grid-input grid-input-price" /></td>
+                  <td class="grid-check"><input type="checkbox" [ngModel]="draft.active" (ngModelChange)="updateBulkDraft($index, 'active', $event)" /></td>
+                  <td><button class="btn btn-sm btn-danger" (click)="removeBulkRow($index)" [title]="t('bulk.removeRow')">&#x2715;</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <button class="btn btn-secondary btn-sm" (click)="addBulkRow()">{{ t('bulk.addRow') }}</button>
+        </div>
+
+        @if (bulkErrors().length > 0) {
+          <ul class="bulk-errors">
+            @for (error of bulkErrors(); track $index) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        }
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="bulkInsert()" [disabled]="bulkInserting() || bulkReady().length === 0 || bulkErrors().length > 0">
+            @if (bulkInserting()) { {{ t('bulk.inserting') }} } @else { {{ t('bulk.insert', { count: bulkReady().length }) }} }
+          </button>
+          <button class="btn btn-secondary" (click)="cancelBulkInsert()">{{ t('common.cancel') }}</button>
+        </div>
+      </div>
+    } @else if (isNew() || editingId() !== null) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ isNew() ? t('products.newTitle') : t('products.editTitle') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="cancelEdit()">&#x2715;</button>
+        </div>
+
+        <label class="field-label">
+          {{ t('common.name') }} *
+          <input [ngModel]="form().name" (ngModelChange)="updateForm('name', $event)" class="filter-input field-full" />
+        </label>
+
+        <label class="field-label">
+          {{ t('products.category') }}
+          <select [ngModel]="form().categoryId" (ngModelChange)="updateForm('categoryId', $event)" class="filter-select field-full">
+            <option value="">—</option>
+            @for (cat of categories(); track cat.id_) {
+              <option [value]="cat.id_">{{ cat.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field-label">
+          {{ t('products.attributeSet') }}
+          <select [ngModel]="form().attributeSetId" (ngModelChange)="updateForm('attributeSetId', $event)" class="filter-select field-full">
+            <option value="">—</option>
+            @for (set of attributeSets(); track set.id) {
+              <option [value]="set.id">{{ set.name }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="field-row">
+          <label class="field-label">
+            {{ t('products.priceBuy') }}
+            <input type="number" step="0.01" [ngModel]="form().priceBuy" (ngModelChange)="updateForm('priceBuy', +$event)" class="filter-input" />
+          </label>
+          <label class="field-label">
+            {{ t('products.priceSell') }}
+            <input type="number" step="0.01" [ngModel]="form().pricesell" (ngModelChange)="updateForm('pricesell', +$event)" class="filter-input" />
+          </label>
+          <div class="price-incl-tax">
+            @if (priceInclTax(); as gross) {
+              {{ t('products.priceInclTax') }}: <strong>{{ gross | number:'1.2-2' }}</strong> ({{ currentTaxRatePercent(form().taxCatId) }}%)
+            } @else {
+              {{ t('products.priceInclTaxNone') }}
+            }
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label class="field-label">
+            {{ t('products.taxCategory') }}
+            <select [ngModel]="form().taxCatId" (ngModelChange)="updateForm('taxCatId', $event)" class="filter-select">
+              <option value="">—</option>
+              @for (cat of taxCategories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </label>
+          <label class="field-label">
+            {{ t('products.unit') }}
+            <input [ngModel]="form().unit" (ngModelChange)="updateForm('unit', $event)" class="filter-input" />
+          </label>
+        </div>
+
+        <label class="check-label">
+          <input type="checkbox" [ngModel]="form().active" (ngModelChange)="updateForm('active', $event)" />
+          {{ t('products.activeLabel') }}
+        </label>
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+            @if (saving()) { {{ t('common.saving') }} } @else { {{ t('common.save') }} }
+          </button>
+          <button class="btn btn-secondary" (click)="cancelEdit()">{{ t('common.cancel') }}</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

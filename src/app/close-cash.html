@@ -1,0 +1,94 @@
+<div class="cc-view">
+  <div class="cc-input-row">
+    <input
+      [ngModel]="tabletId()"
+      (ngModelChange)="onTabletIdChange($event)"
+      [placeholder]="t('closeCash.tabletId')"
+      class="filter-input"
+      (keydown.enter)="preview()"
+    />
+    <button class="btn btn-primary" (click)="preview()" [disabled]="!tabletId().trim() || previewLoading()">
+      @if (previewLoading()) { {{ t('common.loading') }} } @else { {{ t('closeCash.load') }} }
+    </button>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+
+  @if (previewError() === 'not-found') {
+    <div class="state-error">{{ t('closeCash.notFound', { tablet: tabletId() }) }}</div>
+  } @else if (previewError() === 'error') {
+    <div class="state-error">{{ t('closeCash.loadFailed') }}</div>
+  }
+
+  @if (result(); as r) {
+    <div class="cc-result">
+      <div class="cc-result-header">
+        <h2>{{ t('closeCash.tablet') }} {{ r.tabletId }}</h2>
+        @if (justClosed() || r.dateEnd) {
+          <span class="badge ok">{{ t('closeCash.closed') }}</span>
+        } @else {
+          <span class="badge open">{{ t('closeCash.open') }}</span>
+        }
+      </div>
+
+      <dl>
+        <dt>{{ t('closeCash.host') }}</dt><dd>{{ r.host }} / {{ r.hostSequence }}</dd>
+        <dt>{{ t('closeCash.started') }}</dt><dd>{{ r.dateStart | date:'dd.MM.yyyy HH:mm:ss' }}</dd>
+        @if (r.dateEnd) {
+          <dt>{{ t('closeCash.ended') }}</dt><dd>{{ r.dateEnd | date:'dd.MM.yyyy HH:mm:ss' }}</dd>
+        }
+        <dt>{{ t('closeCash.tickets') }}</dt><dd>{{ r.ticketCount }}</dd>
+        <dt>{{ t('closeCash.cashTotal') }}</dt><dd>{{ r.cashTotal | number:'1.2-2' }}</dd>
+        <dt>{{ t('closeCash.cardTotal') }}</dt><dd>{{ r.cardTotal | number:'1.2-2' }}</dd>
+        <dt>{{ t('closeCash.paperTotal') }}</dt><dd>{{ r.paperTotal | number:'1.2-2' }}</dd>
+        <dt>{{ t('closeCash.cashInOut') }}</dt><dd>{{ r.cashInOutTotal | number:'1.2-2' }}</dd>
+        <dt>{{ t('closeCash.freeTotal') }}</dt><dd>{{ r.freeTotal | number:'1.2-2' }}</dd>
+        <dt>{{ t('closeCash.sales') }}</dt><dd>{{ r.salesCount }} ({{ r.salesGrossTotal | number:'1.2-2' }} {{ t('closeCash.incl') }} {{ r.salesTax | number:'1.2-2' }} {{ t('closeCash.taxWord') }})</dd>
+      </dl>
+
+      <h3>{{ t('closeCash.paymentLines') }}</h3>
+      <table class="cc-table">
+        <thead>
+          <tr><th>{{ t('closeCash.payment') }}</th><th>{{ t('closeCash.description') }}</th><th>{{ t('closeCash.total') }}</th></tr>
+        </thead>
+        <tbody>
+          @for (p of r.paymentLines; track p.payment + p.description) {
+            <tr><td>{{ p.payment }}</td><td>{{ p.description }}</td><td>{{ p.total | number:'1.2-2' }}</td></tr>
+          } @empty {
+            <tr><td colspan="3" class="cc-empty-row">{{ t('closeCash.noPaymentLines') }}</td></tr>
+          }
+        </tbody>
+      </table>
+
+      <h3>{{ t('closeCash.taxBreakdown') }}</h3>
+      <table class="cc-table">
+        <thead>
+          <tr><th>{{ t('closeCash.taxCategory') }}</th><th>{{ t('closeCash.taxBase') }}</th><th>{{ t('closeCash.taxAmount') }}</th></tr>
+        </thead>
+        <tbody>
+          @for (t of r.taxBreakdown; track t.category) {
+            <tr><td>{{ t.category }}</td><td>{{ t.baseAmount | number:'1.2-2' }}</td><td>{{ t.taxAmount | number:'1.2-2' }}</td></tr>
+          } @empty {
+            <tr><td colspan="3" class="cc-empty-row">{{ t('closeCash.noTaxBreakdown') }}</td></tr>
+          }
+        </tbody>
+      </table>
+
+      @if (closeError() === 'not-found') {
+        <div class="state-error">{{ t('closeCash.gone') }}</div>
+      } @else if (closeError() === 'conflict') {
+        <div class="state-error">{{ t('closeCash.conflict') }}</div>
+      } @else if (closeError() === 'error') {
+        <div class="state-error">{{ t('closeCash.closeFailed') }}</div>
+      }
+
+      <div class="detail-actions">
+        <button class="btn btn-danger" (click)="closeCash()" [disabled]="justClosed() || closeLoading() || !!r.dateEnd">
+          @if (closeLoading()) { {{ t('closeCash.closing') }} } @else { {{ t('closeCash.closeButton') }} }
+        </button>
+      </div>
+    </div>
+  }
+</div>

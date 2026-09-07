@@ -1,0 +1,89 @@
+<div class="cat-view">
+  <div class="toolbar">
+    <button (click)="load()" class="btn btn-secondary">&#8635; {{ t('common.refresh') }}</button>
+    <button (click)="startCreate()" class="btn btn-primary">{{ t('categories.new') }}</button>
+  </div>
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="content">
+    <div class="list-panel">
+      @if (loading()) {
+        <div class="empty">{{ t('common.loading') }}</div>
+      } @else if (flat().length === 0) {
+        <div class="empty">{{ t('categories.none') }}</div>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>{{ t('common.name') }}</th>
+              <th>{{ t('categories.parent') }}</th>
+              <th>{{ t('categories.printer') }}</th>
+              <th>{{ t('common.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of flat(); track entry.category.id_) {
+              <tr [class.selected]="editingId() === entry.category.id_" (click)="startEdit(entry.category)">
+                <td [style.padding-left.px]="12 + entry.depth * 20">
+                  @if (entry.depth > 0) { <span class="tree-mark">└</span> }
+                  {{ entry.category.name }}
+                </td>
+                <td>{{ categoryName(entry.category.parentId) }}</td>
+                <td>{{ printerLabel(entry.category.printer) }}</td>
+                <td class="actions">
+                  <button class="btn btn-sm btn-primary" (click)="$event.stopPropagation(); startEdit(entry.category)" [title]="t('common.edit')">&#9998;</button>
+                  <button class="btn btn-sm btn-danger" (click)="remove(entry.category, $event)" [title]="t('common.delete')">&#128465;</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    @if (isNew() || editingId() !== null) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ isNew() ? t('categories.newTitle') : t('categories.editTitle') }}</h2>
+          <button class="btn btn-secondary btn-sm" (click)="cancelEdit()">&#x2715;</button>
+        </div>
+
+        <label class="field-label">
+          {{ t('common.name') }} *
+          <input [ngModel]="form().name" (ngModelChange)="updateForm('name', $event)" class="filter-input field-full" />
+        </label>
+
+        <label class="field-label">
+          {{ t('categories.parent') }}
+          <select [ngModel]="form().parentId" (ngModelChange)="updateForm('parentId', $event)" class="filter-select field-full">
+            <option value="">{{ t('categories.topLevel') }}</option>
+            @for (entry of parentOptions(); track entry.category.id_) {
+              <option [value]="entry.category.id_">{{ entry.category.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field-label">
+          {{ t('categories.printer') }}
+          <select [ngModel]="form().printer" (ngModelChange)="updateForm('printer', +$event)" class="filter-select field-full">
+            <option [value]="printerDefault">{{ t('categories.printerDefault') }}</option>
+            @for (slot of printerSlots; track slot) {
+              <option [value]="slot">{{ printerLabel(slot) }}</option>
+            }
+          </select>
+        </label>
+
+        <p class="field-hint">{{ t('categories.printerHint') }}</p>
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+            @if (saving()) { {{ t('common.saving') }} } @else { {{ t('common.save') }} }
+          </button>
+          <button class="btn btn-secondary" (click)="cancelEdit()">{{ t('common.cancel') }}</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

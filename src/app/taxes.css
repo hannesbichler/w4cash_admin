@@ -1,0 +1,60 @@
+.tax-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px 20px 0;
+}
+
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #7a8ab0;
+}
+
+.field-full { width: 100%; }
+
+.field-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+
+.rate-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rate-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f6f9ff;
+  border-radius: 6px;
+  padding: 8px 10px;
+  gap: 10px;
+}
+
+.rate-info { display: flex; flex-direction: column; gap: 2px; }
+
+.rate-pct { font-weight: 700; color: #3a6fff; font-size: 0.95rem; }
+
+.rate-name { font-size: 0.85rem; }
+
+.rate-date { font-size: 0.75rem; color: #7a8ab0; }
+
+.attr-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+.rate-form {
+  background: #f6f9ff;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rate-form .filter-input { width: 130px; }
