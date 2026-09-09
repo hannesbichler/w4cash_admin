@@ -30,7 +30,8 @@
 
 .cc-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: #fff;
   border: 1px solid #eef2ff;
   border-radius: 8px;
