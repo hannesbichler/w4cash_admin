@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Floor, FloorInput, Place, PlaceInput } from './floor.model';
+import { environment } from '../environments/environment';
 
-const API = '/api';
+const API = environment.apiBaseUrl;
 
 function firstEmbeddedCollection<T>(response: { _embedded?: Record<string, T[]> }): T[] {
   const values = response._embedded ? Object.values(response._embedded) : [];

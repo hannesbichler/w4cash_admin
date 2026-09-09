@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { PrintJob } from './print-job.model';
+import { environment } from '../environments/environment';
 
-const API = '/api';
+const API = environment.apiBaseUrl;
 
 @Injectable({ providedIn: 'root' })
 export class PrintJobService {

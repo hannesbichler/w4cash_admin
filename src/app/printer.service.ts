@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PrinterSlotConfig } from './printer.model';
+import { environment } from '../environments/environment';
 
-const API = '/api';
+const API = environment.apiBaseUrl;
 
 @Injectable({ providedIn: 'root' })
 export class PrinterService {

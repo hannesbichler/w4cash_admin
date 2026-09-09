@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Category, CategoryInput, FlatCategory } from './category.model';
+import { environment } from '../environments/environment';
 
-const API = '/api';
+const API = environment.apiBaseUrl;
 
 /** The backend nests subcategories under their parent; most views want one flat list. */
 export function flattenCategories(roots: Category[], depth = 0): FlatCategory[] {
