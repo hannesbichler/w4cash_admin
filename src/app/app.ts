@@ -24,8 +24,8 @@ const RAILS: Record<string, Rail> = {
   'product-config': {
     title: 'nav.productConfig',
     items: [
-      { link: '/products', icon: 'i-products', label: 'nav.products' },
       { link: '/categories', icon: 'i-categories', label: 'nav.categories' },
+      { link: '/products', icon: 'i-products', label: 'nav.products' },
       { link: '/attribute-sets', icon: 'i-attributes', label: 'nav.attributeSets' },
       { link: '/taxes', icon: 'i-taxes', label: 'nav.taxes' }
     ]
