@@ -18,12 +18,19 @@
             <span class="section-note">{{ floorName(selectedFloorId()) }}</span>
           }
         </div>
-        <button type="button" class="collapse-button" (click)="toggleFloors()"
-                [attr.aria-expanded]="!floorsCollapsed()"
-                [title]="floorsCollapsed() ? t('common.expand') : t('common.collapse')">
-          {{ floorsCollapsed() ? t('common.expand') : t('common.collapse') }}
-          <span class="caret">{{ floorsCollapsed() ? '▸' : '▾' }}</span>
-        </button>
+        <div class="section-actions">
+          @if (selectedFloorCount() > 1) {
+            <button class="btn btn-danger btn-sm" (click)="removeSelectedFloors()">
+              &#128465; {{ t('common.delete') }} ({{ selectedFloorCount() }})
+            </button>
+          }
+          <button type="button" class="collapse-button" (click)="toggleFloors()"
+                  [attr.aria-expanded]="!floorsCollapsed()"
+                  [title]="floorsCollapsed() ? t('common.expand') : t('common.collapse')">
+            {{ floorsCollapsed() ? t('common.expand') : t('common.collapse') }}
+            <span class="caret">{{ floorsCollapsed() ? '▸' : '▾' }}</span>
+          </button>
+        </div>
       </div>
 
       @if (!floorsCollapsed()) {
@@ -35,6 +42,9 @@
           <table>
             <thead>
               <tr>
+                <th class="select-cell">
+                  <input type="checkbox" [checked]="allFloorsSelected()" (click)="toggleAllFloors($event)" [title]="t('products.selectAll')" />
+                </th>
                 <th>{{ t('common.name') }}</th>
                 <th>{{ t('floors.sortOrder') }}</th>
                 <th>{{ t('common.actions') }}</th>
@@ -42,7 +52,10 @@
             </thead>
             <tbody>
               @for (floor of floors(); track floor.id_) {
-                <tr [class.selected]="selectedFloorId() === floor.id_" (click)="selectFloor(floor)">
+                <tr [class.selected]="selectedFloorId() === floor.id_ || isFloorSelected(floor.id_)" (click)="selectFloor(floor)">
+                  <td class="select-cell">
+                    <input type="checkbox" [checked]="isFloorSelected(floor.id_)" (click)="toggleFloorSelection(floor.id_, $event)" />
+                  </td>
                   <td>{{ floor.name }}</td>
                   <td>{{ floor.sortOrder ?? '—' }}</td>
                   <td class="actions">
@@ -68,6 +81,11 @@
             </div>
             <div class="section-actions">
               <button class="btn btn-primary btn-sm" (click)="startCreatePlace()">{{ t('floors.newTable') }}</button>
+              @if (selectedPlaceCount() > 1) {
+                <button class="btn btn-danger btn-sm" (click)="removeSelectedPlaces()">
+                  &#128465; {{ t('common.delete') }} ({{ selectedPlaceCount() }})
+                </button>
+              }
               <button type="button" class="collapse-button" (click)="togglePlaces()"
                       [attr.aria-expanded]="!placesCollapsed()"
                       [title]="placesCollapsed() ? t('common.expand') : t('common.collapse')">
@@ -86,6 +104,9 @@
               <table>
                 <thead>
                   <tr>
+                    <th class="select-cell">
+                      <input type="checkbox" [checked]="allPlacesSelected()" (click)="toggleAllPlaces($event)" [title]="t('products.selectAll')" />
+                    </th>
                     <th>{{ t('common.name') }}</th>
                     <th>{{ t('floors.position') }}</th>
                     <th>{{ t('floors.size') }}</th>
@@ -95,7 +116,10 @@
                 </thead>
                 <tbody>
                   @for (place of places(); track place.id_) {
-                    <tr [class.selected]="editingPlaceId() === place.id_" (click)="startEditPlace(place, $event)">
+                    <tr [class.selected]="editingPlaceId() === place.id_ || isPlaceSelected(place.id_)" (click)="startEditPlace(place, $event)">
+                      <td class="select-cell">
+                        <input type="checkbox" [checked]="isPlaceSelected(place.id_)" (click)="togglePlaceSelection(place.id_, $event)" />
+                      </td>
                       <td>{{ place.name }}</td>
                       <td>{{ place.x }} / {{ place.y }}</td>
                       <td>

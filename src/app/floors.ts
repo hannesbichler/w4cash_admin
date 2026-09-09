@@ -2,7 +2,7 @@ import { Component, ElementRef, HostListener, computed, inject, signal, viewChil
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, from, map, of, concatMap, toArray, Observable } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { FloorService } from './floor.service';
 import { Floor, FloorInput, Place, PlaceInput } from './floor.model';
@@ -127,6 +127,7 @@ export class Floors implements OnInit {
   actionMsg = signal('');
 
   floors = signal<Floor[]>([]);
+  selectedFloorIds = signal<Set<string>>(new Set<string>());
   loading = signal(false);
   // Either list can be collapsed to give the other one the full panel.
   floorsCollapsed = signal(false);
@@ -136,6 +137,7 @@ export class Floors implements OnInit {
   // The floor whose tables are listed; stays selected while a table is edited.
   selectedFloorId = signal<string | null>(null);
   places = signal<Place[]>([]);
+  selectedPlaceIds = signal<Set<string>>(new Set<string>());
   loadingPlaces = signal(false);
 
   panel = signal<Panel>(null);
@@ -163,7 +165,18 @@ export class Floors implements OnInit {
   load() {
     this.loading.set(true);
     this.svc.list().subscribe({
-      next: floors => { this.floors.set(floors); this.loading.set(false); },
+      next: floors => {
+        this.floors.set(floors);
+        const knownIds = new Set(floors.map(floor => floor.id_));
+        this.selectedFloorIds.update(ids => new Set(Array.from(ids).filter(id => knownIds.has(id))));
+        if (this.selectedFloorId() !== null && !knownIds.has(this.selectedFloorId()!)) {
+          this.selectedFloorId.set(null);
+          this.places.set([]);
+          this.selectedPlaceIds.set(new Set<string>());
+          this.closePanel();
+        }
+        this.loading.set(false);
+      },
       error: () => { this.loading.set(false); this.flash(this.t('floors.loadFailed')); }
     });
   }
@@ -254,6 +267,11 @@ export class Floors implements OnInit {
     const bottom = tables.reduce((max, t) => Math.max(max, t.y + t.height), 0);
     return { tables, viewBox: `0 0 ${right + PLAN_PADDING} ${bottom + PLAN_PADDING}` };
   });
+
+  selectedFloorCount = computed(() => this.selectedFloorIds().size);
+  selectedPlaceCount = computed(() => this.selectedPlaceIds().size);
+  allFloorsSelected = computed(() => this.floors().length > 0 && this.selectedFloorIds().size === this.floors().length);
+  allPlacesSelected = computed(() => this.places().length > 0 && this.selectedPlaceIds().size === this.places().length);
 
   startMove(table: PlanTable, event: PointerEvent) {
     this.startDrag('move', table, event);
@@ -470,9 +488,56 @@ export class Floors implements OnInit {
     this.startEditFloor(floor);
   }
 
+  isFloorSelected(id: string): boolean {
+    return this.selectedFloorIds().has(id);
+  }
+
+  toggleFloorSelection(id: string, event: Event) {
+    event.stopPropagation();
+    this.selectedFloorIds.update(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  toggleAllFloors(event: Event) {
+    event.stopPropagation();
+    this.selectedFloorIds.set(
+      this.allFloorsSelected()
+        ? new Set<string>()
+        : new Set(this.floors().map(floor => floor.id_))
+    );
+  }
+
+  isPlaceSelected(id: string): boolean {
+    return this.selectedPlaceIds().has(id);
+  }
+
+  togglePlaceSelection(id: string, event: Event) {
+    event.stopPropagation();
+    this.selectedPlaceIds.update(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  toggleAllPlaces(event: Event) {
+    event.stopPropagation();
+    this.selectedPlaceIds.set(
+      this.allPlacesSelected()
+        ? new Set<string>()
+        : new Set(this.places().map(place => place.id_))
+    );
+  }
+
   private loadPlaces(floorId: string) {
     this.loadingPlaces.set(true);
     this.places.set([]);
+    this.selectedPlaceIds.set(new Set<string>());
     this.svc.places(floorId).subscribe({
       next: places => { this.places.set(places); this.loadingPlaces.set(false); },
       error: () => { this.loadingPlaces.set(false); this.flash(this.t('floors.tablesLoadFailed')); }
@@ -530,22 +595,106 @@ export class Floors implements OnInit {
 
   removeFloor(floor: Floor, event: Event) {
     event.stopPropagation();
-    if (!confirm(this.t('floors.confirmDelete', { name: floor.name }))) return;
-    this.svc.delete(floor.id_).subscribe({
-      next: () => {
-        if (this.selectedFloorId() === floor.id_) {
-          this.selectedFloorId.set(null);
-          this.places.set([]);
-          this.closePanel();
-        }
-        this.flash(this.t('floors.deleted', { name: floor.name }));
-        this.load();
-      },
-      // 409 means tables still sit on the floor; the body says how many.
+    const loadedPlaces = this.selectedFloorId() === floor.id_ ? this.places() : null;
+    if (loadedPlaces !== null) {
+      this.confirmAndDeleteFloorWithTables(floor, loadedPlaces);
+      return;
+    }
+
+    this.svc.places(floor.id_).subscribe({
+      next: places => this.confirmAndDeleteFloorWithTables(floor, places),
+      error: () => this.flash(this.t('floors.tablesLoadFailed'))
+    });
+  }
+
+  private confirmAndDeleteFloorWithTables(floor: Floor, places: Place[]) {
+    const confirmed = places.length > 0
+      ? confirm(this.t('floors.confirmDeleteWithTables', { name: floor.name, count: places.length }))
+      : confirm(this.t('floors.confirmDelete', { name: floor.name }));
+    if (!confirmed) return;
+
+    const finishFloorDelete = () => {
+      this.svc.delete(floor.id_).subscribe({
+        next: () => {
+          this.selectedFloorIds.update(ids => {
+            const next = new Set(ids);
+            next.delete(floor.id_);
+            return next;
+          });
+          if (this.selectedFloorId() === floor.id_) {
+            this.selectedFloorId.set(null);
+            this.places.set([]);
+            this.selectedPlaceIds.set(new Set<string>());
+            this.closePanel();
+          }
+          this.flash(this.t('floors.deleted', { name: floor.name }));
+          this.load();
+        },
+        error: (err: HttpErrorResponse) => this.flash(this.serverReason(
+          err, this.t('floors.deleteFailed', { name: floor.name })
+        ))
+      });
+    };
+
+    if (places.length === 0) {
+      finishFloorDelete();
+      return;
+    }
+
+    forkJoin(places.map(place => this.svc.deletePlace(place.id_))).subscribe({
+      next: () => finishFloorDelete(),
       error: (err: HttpErrorResponse) => this.flash(this.serverReason(
-        err, this.t('floors.deleteFailed', { name: floor.name })
+        err, this.t('floors.deleteTablesFailed', { name: floor.name })
       ))
     });
+  }
+
+  removeSelectedFloors() {
+    const floorIds = Array.from(this.selectedFloorIds());
+    if (floorIds.length < 2) return;
+    const selectedFloors = this.floors().filter(floor => floorIds.includes(floor.id_));
+    if (selectedFloors.length < 2) return;
+
+    forkJoin(selectedFloors.map(floor => this.svc.places(floor.id_).pipe(map(places => ({ floor, places }))))).subscribe({
+      next: floorEntries => {
+        const tableCount = floorEntries.reduce((count, entry) => count + entry.places.length, 0);
+        const confirmed = tableCount > 0
+          ? confirm(this.t('floors.confirmDeleteSelectedWithTables', { count: floorEntries.length, tables: tableCount }))
+          : confirm(this.t('floors.confirmDeleteSelected', { count: floorEntries.length }));
+        if (!confirmed) return;
+
+        from(floorEntries).pipe(
+          concatMap(entry => this.deleteFloorWithTables$(entry.floor, entry.places)),
+          toArray()
+        ).subscribe({
+          next: () => {
+            const removedFloorIds = new Set(floorEntries.map(entry => entry.floor.id_));
+            this.selectedFloorIds.set(new Set<string>());
+            if (this.selectedFloorId() !== null && removedFloorIds.has(this.selectedFloorId()!)) {
+              this.selectedFloorId.set(null);
+              this.places.set([]);
+              this.selectedPlaceIds.set(new Set<string>());
+              this.closePanel();
+            }
+            this.flash(this.t('floors.deletedSelected', { count: floorEntries.length }));
+            this.load();
+          },
+          error: () => this.flash(this.t('floors.deleteSelectedFailed'))
+        });
+      },
+      error: () => this.flash(this.t('floors.tablesLoadFailed'))
+    });
+  }
+
+  private deleteFloorWithTables$(floor: Floor, places: Place[]): Observable<void> {
+    const deleteTables$ = places.length > 0
+      ? forkJoin(places.map(place => this.svc.deletePlace(place.id_))).pipe(map(() => void 0))
+      : of(void 0);
+
+    return deleteTables$.pipe(
+      concatMap(() => this.svc.delete(floor.id_)),
+      map(() => void 0)
+    );
   }
 
   // --- tables ------------------------------------------------------------------------------
@@ -617,6 +766,11 @@ export class Floors implements OnInit {
     if (!confirm(this.t('floors.confirmDeleteTable', { name: place.name }))) return;
     this.svc.deletePlace(place.id_).subscribe({
       next: () => {
+        this.selectedPlaceIds.update(ids => {
+          const next = new Set(ids);
+          next.delete(place.id_);
+          return next;
+        });
         if (this.editingPlaceId() === place.id_) this.closePanel();
         this.places.update(places => places.filter(other => other.id_ !== place.id_));
       },
@@ -624,6 +778,28 @@ export class Floors implements OnInit {
       error: (err: HttpErrorResponse) => this.flash(this.serverReason(
         err, this.t('floors.tableDeleteFailed', { name: place.name })
       ))
+    });
+  }
+
+  removeSelectedPlaces() {
+    const placeIds = Array.from(this.selectedPlaceIds());
+    if (placeIds.length < 2) return;
+    const selectedPlaces = this.places().filter(place => placeIds.includes(place.id_));
+    if (selectedPlaces.length < 2) return;
+    if (!confirm(this.t('floors.confirmDeleteSelectedTables', { count: selectedPlaces.length }))) return;
+
+    from(selectedPlaces).pipe(
+      concatMap(place => this.svc.deletePlace(place.id_)),
+      toArray()
+    ).subscribe({
+      next: () => {
+        const removedIds = new Set(selectedPlaces.map(place => place.id_));
+        this.places.update(places => places.filter(place => !removedIds.has(place.id_)));
+        if (this.editingPlaceId() !== null && removedIds.has(this.editingPlaceId()!)) this.closePanel();
+        this.selectedPlaceIds.set(new Set<string>());
+        this.flash(this.t('floors.deletedSelectedTables', { count: selectedPlaces.length }));
+      },
+      error: () => this.flash(this.t('floors.deleteSelectedTablesFailed'))
     });
   }
 

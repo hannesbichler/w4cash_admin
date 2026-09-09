@@ -35,7 +35,7 @@
   background: #fff;
   border: 1px solid #eef2ff;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .cc-table th {

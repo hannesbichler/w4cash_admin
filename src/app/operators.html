@@ -64,6 +64,11 @@
             }
           </div>
           <div class="section-actions">
+            @if (selectedVisiblePersonCount() > 1) {
+              <button class="btn btn-danger btn-sm" (click)="removeSelectedPersons()">
+                &#128465; {{ t('common.delete') }} ({{ selectedVisiblePersonCount() }})
+              </button>
+            }
             @if (roleFilter() !== null) {
               <button class="btn btn-secondary btn-sm" (click)="roleFilter.set(null)">{{ t('operators.showAll') }}</button>
             }
@@ -85,6 +90,9 @@
             <table>
               <thead>
                 <tr>
+                  <th class="select-cell">
+                    <input type="checkbox" [checked]="allVisiblePersonsSelected()" (click)="toggleAllVisiblePersons($event)" [title]="t('products.selectAll')" />
+                  </th>
                   <th>{{ t('common.name') }}</th>
                   <th>{{ t('operators.role') }}</th>
                   <th>{{ t('operators.card') }}</th>
@@ -94,7 +102,10 @@
               </thead>
               <tbody>
                 @for (person of visiblePersons(); track person.id_) {
-                  <tr [class.selected]="editingPersonId() === person.id_" (click)="startEditPerson(person, $event)">
+                  <tr [class.selected]="editingPersonId() === person.id_ || isPersonSelected(person.id_)" (click)="startEditPerson(person, $event)">
+                    <td class="select-cell">
+                      <input type="checkbox" [checked]="isPersonSelected(person.id_)" (click)="togglePersonSelection(person.id_, $event)" />
+                    </td>
                     <td>{{ person.name }}</td>
                     <td>{{ roleName(person.role) }}</td>
                     <td class="card-cell">{{ person.card || '—' }}</td>

@@ -1,12 +1,32 @@
+:host {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
 .floor-view {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   padding: 12px 20px 0;
 }
 
+.floor-view .content {
+  min-height: 0;
+}
+
+.floor-view .list-panel {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.select-cell { width: 34px; text-align: center; }
+.select-cell input { cursor: pointer; }
 
 .section-header {
   display: flex;

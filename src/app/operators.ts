@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, of, catchError } from 'rxjs';
+import { forkJoin, of, catchError, from, concatMap, toArray } from 'rxjs';
 import { PersonService } from './person.service';
 import { Person, PersonInput, Role, RoleInput } from './person.model';
 import { I18nService } from './i18n.service';
@@ -30,6 +30,7 @@ export class Operators implements OnInit {
 
   roles = signal<Role[]>([]);
   persons = signal<Person[]>([]);
+  selectedPersonIds = signal<Set<string>>(new Set<string>());
   loading = signal(false);
   // The roles list can be folded away once it is set up, since the Bediener list is the one
   // that gets edited day to day.
@@ -98,12 +99,53 @@ export class Operators implements OnInit {
     return [...persons].sort((a, b) => a.name.localeCompare(b.name));
   });
 
+  selectedVisiblePersonCount = computed(() => {
+    const selected = this.selectedPersonIds();
+    return this.visiblePersons().reduce((count, person) => count + (selected.has(person.id_) ? 1 : 0), 0);
+  });
+
+  allVisiblePersonsSelected = computed(() => {
+    const visible = this.visiblePersons();
+    if (visible.length === 0) return false;
+    const selected = this.selectedPersonIds();
+    return visible.every(person => selected.has(person.id_));
+  });
+
   // --- roles -------------------------------------------------------------------------------
 
   selectRole(role: Role) {
     // A second click on the same role clears the filter rather than reselecting it.
     this.roleFilter.set(this.roleFilter() === role.id_ ? null : role.id_);
+    this.selectedPersonIds.set(new Set<string>());
     this.startEditRole(role);
+  }
+
+  isPersonSelected(id: string): boolean {
+    return this.selectedPersonIds().has(id);
+  }
+
+  togglePersonSelection(id: string, event: Event) {
+    event.stopPropagation();
+    this.selectedPersonIds.update(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  toggleAllVisiblePersons(event: Event) {
+    event.stopPropagation();
+    this.selectedPersonIds.update(current => {
+      const next = new Set(current);
+      const visibleIds = this.visiblePersons().map(person => person.id_);
+      if (this.allVisiblePersonsSelected()) {
+        for (const id of visibleIds) next.delete(id);
+      } else {
+        for (const id of visibleIds) next.add(id);
+      }
+      return next;
+    });
   }
 
   updateRoleForm(name: string) {
@@ -234,6 +276,11 @@ export class Operators implements OnInit {
     this.svc.deletePerson(person.id_).subscribe({
       next: () => {
         if (this.editingPersonId() === person.id_) this.closePanel();
+        this.selectedPersonIds.update(ids => {
+          const next = new Set(ids);
+          next.delete(person.id_);
+          return next;
+        });
         this.persons.update(persons => persons.filter(other => other.id_ !== person.id_));
         this.flash(this.t('operators.deleted', { name: person.name }));
       },
@@ -241,6 +288,30 @@ export class Operators implements OnInit {
       error: (err: HttpErrorResponse) => this.flash(this.serverReason(
         err, this.t('operators.deleteFailed', { name: person.name })
       ))
+    });
+  }
+
+  removeSelectedPersons() {
+    const selected = this.visiblePersons().filter(person => this.selectedPersonIds().has(person.id_));
+    if (selected.length < 2) return;
+    if (!confirm(this.t('operators.confirmDeleteSelected', { count: selected.length }))) return;
+
+    from(selected).pipe(
+      concatMap(person => this.svc.deletePerson(person.id_)),
+      toArray()
+    ).subscribe({
+      next: () => {
+        const removedIds = new Set(selected.map(person => person.id_));
+        if (this.editingPersonId() !== null && removedIds.has(this.editingPersonId()!)) this.closePanel();
+        this.persons.update(persons => persons.filter(person => !removedIds.has(person.id_)));
+        this.selectedPersonIds.update(ids => {
+          const next = new Set(ids);
+          for (const id of removedIds) next.delete(id);
+          return next;
+        });
+        this.flash(this.t('operators.deletedSelected', { count: selected.length }));
+      },
+      error: () => this.flash(this.t('operators.deleteSelectedFailed'))
     });
   }
 
