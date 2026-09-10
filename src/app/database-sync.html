@@ -1,0 +1,63 @@
+<div class="db-sync-view">
+  <div class="toolbar">
+    <button class="btn btn-secondary" (click)="runTestConnection()" [disabled]="testing() || running()">
+      @if (testing()) { {{ t('dbSync.testing') }} } @else { {{ t('dbSync.test') }} }
+    </button>
+    <button class="btn btn-danger" (click)="runSync()" [disabled]="running()">
+      @if (running()) { {{ t('dbSync.running') }} } @else { {{ t('dbSync.run') }} }
+    </button>
+  </div>
+
+  @if (actionMsg()) {
+    <div class="flash">{{ actionMsg() }}</div>
+  }
+
+  <div class="sync-card">
+    <h2>{{ t('dbSync.title') }}</h2>
+    <p>{{ t('dbSync.description') }}</p>
+
+    <div class="form-grid">
+      <label class="field-label">
+        {{ t('dbSync.host') }} *
+        <input class="filter-input field-full" [ngModel]="form().host" (ngModelChange)="updateForm('host', $event)" />
+      </label>
+
+      <label class="field-label">
+        {{ t('dbSync.port') }} *
+        <input type="number" class="filter-input field-full" [ngModel]="form().port" (ngModelChange)="updateForm('port', +$event)" />
+      </label>
+
+      <label class="field-label">
+        {{ t('dbSync.database') }} *
+        <input class="filter-input field-full" [ngModel]="form().database" (ngModelChange)="updateForm('database', $event)" />
+      </label>
+
+      <label class="field-label">
+        {{ t('dbSync.user') }} *
+        <input class="filter-input field-full" [ngModel]="form().user" (ngModelChange)="updateForm('user', $event)" />
+      </label>
+
+      <label class="field-label field-full-span">
+        {{ t('dbSync.password') }} *
+        <input type="password" class="filter-input field-full" [ngModel]="form().password" (ngModelChange)="updateForm('password', $event)" />
+      </label>
+    </div>
+
+    @if (testResponse(); as testMessage) {
+      <div class="response-box" [class.success]="testOk() === true" [class.error]="testOk() === false">
+        <div class="response-title">{{ t('dbSync.testResponse') }}</div>
+        <pre>{{ testMessage }}</pre>
+      </div>
+    }
+
+    <ul>
+      <li>{{ t('dbSync.step1') }}</li>
+      <li>{{ t('dbSync.step2') }}</li>
+      <li>{{ t('dbSync.step3') }}</li>
+    </ul>
+
+    @if (errorMsg(); as err) {
+      <div class="error-banner">{{ err }}</div>
+    }
+  </div>
+</div>
