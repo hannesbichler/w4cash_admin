@@ -35,7 +35,8 @@ const RAILS: Record<string, Rail> = {
     items: [
       { link: '/floors', icon: 'i-floors', label: 'nav.floors' },
       { link: '/printers', icon: 'i-printer', label: 'nav.printers' },
-      { link: '/operators', icon: 'i-operators', label: 'nav.operators' }
+      { link: '/operators', icon: 'i-operators', label: 'nav.operators' },
+      { link: '/database-sync', icon: 'i-db-sync', label: 'nav.dbSync' }
     ]
   },
   'analytics': {
