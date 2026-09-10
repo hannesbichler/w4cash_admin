@@ -96,11 +96,19 @@
 
 /* The box the right-click menu is positioned inside, so its coordinates stay independent of
    how far the page is scrolled. */
-.plan-wrap { position: relative; }
+.plan-wrap {
+  position: relative;
+  width: 1360px;
+  height: 1200px;
+  overflow: auto;
+}
 
 .floor-plan {
-  width: 100%;
-  max-height: 440px;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
   background: #fff;
   border: 1px solid #dde8ff;
   border-radius: 10px;

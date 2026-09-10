@@ -96,6 +96,24 @@ interface PlanPreview {
   height: number;
 }
 
+interface FloorImportRow {
+  sourceFloorId: string;
+  floorName: string;
+  sortOrder: number | null;
+}
+
+interface TableImportRow {
+  sourceFloorId: string;
+  sourceFloorName: string;
+  tableName: string;
+  x: number;
+  y: number;
+  width: number | null;
+  height: number | null;
+  fontSize: number | null;
+  fontColor: string | null;
+}
+
 /**
  * What a number input's ngModelChange actually emits: a number, or null once the field is
  * cleared - never the string the old handlers assumed.
@@ -150,6 +168,7 @@ export class Floors implements OnInit {
   placeForm = signal<PlaceInput>({ ...EMPTY_PLACE_FORM });
 
   planSvg = viewChild<ElementRef<SVGSVGElement>>('planSvg');
+  importFileInput = viewChild<ElementRef<HTMLInputElement>>('importFileInput');
   // The positioned box the right-click menu is placed inside.
   planWrap = viewChild<ElementRef<HTMLElement>>('planWrap');
   planMenu = signal<PlanMenu | null>(null);
@@ -234,6 +253,202 @@ export class Floors implements OnInit {
     });
   }
 
+  openImportFloorsAndTables() {
+    const input = this.importFileInput()?.nativeElement;
+    if (!input) return;
+    input.value = '';
+    input.click();
+  }
+
+  importFloorsAndTables(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] ?? null;
+    if (!file) return;
+
+    this.loading.set(true);
+    file.arrayBuffer()
+      .then(buffer => {
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const floorRows = this.readFloorRows(workbook);
+        const tableRows = this.readTableRows(workbook);
+        if (floorRows.length === 0 && tableRows.length === 0) {
+          throw new Error('The XLSX file has no importable Floors or Tables rows.');
+        }
+        return this.importParsedRows$(floorRows, tableRows);
+      })
+      .then(summary => {
+        this.loading.set(false);
+        const tableText = summary.tablesImported === 1 ? 'table' : 'tables';
+        const floorText = summary.floorsImported === 1 ? 'floor' : 'floors';
+        this.flash(`Imported ${summary.floorsImported} ${floorText} and ${summary.tablesImported} ${tableText} from XLSX.`);
+        this.load();
+      })
+      .catch(error => {
+        this.loading.set(false);
+        const message = error instanceof Error ? error.message : 'Failed to import floors and tables.';
+        this.flash(message);
+      })
+      .finally(() => {
+        if (input) input.value = '';
+      });
+  }
+
+  private readFloorRows(workbook: XLSX.WorkBook): FloorImportRow[] {
+    const sheet = workbook.Sheets['Floors'];
+    if (!sheet) return [];
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
+    return rows
+      .map(row => ({
+        sourceFloorId: this.toText(row['Floor id']),
+        floorName: this.toText(row['Floor name']),
+        sortOrder: this.toNullableWholeNumber(row['Sort order'])
+      }))
+      .filter(row => row.floorName !== '');
+  }
+
+  private readTableRows(workbook: XLSX.WorkBook): TableImportRow[] {
+    const sheet = workbook.Sheets['Tables'];
+    if (!sheet) return [];
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
+    return rows
+      .map(row => ({
+        sourceFloorId: this.toText(row['Floor id']),
+        sourceFloorName: this.toText(row['Floor name']),
+        tableName: this.toText(row['Table name']),
+        x: this.toWholeNumberOrDefault(row['X'], 0),
+        y: this.toWholeNumberOrDefault(row['Y'], 0),
+        width: this.toNullableWholeNumber(row['Width']),
+        height: this.toNullableWholeNumber(row['Height']),
+        fontSize: this.toNullableWholeNumber(row['Font size']),
+        fontColor: this.toNullableText(row['Font color'])
+      }))
+      .filter(row => row.tableName !== '');
+  }
+
+  private importParsedRows$(floorRows: FloorImportRow[], tableRows: TableImportRow[]): Promise<{ floorsImported: number; tablesImported: number }> {
+    return new Promise((resolve, reject) => {
+      this.svc.list().subscribe({
+        next: existingFloors => {
+          const floorsByName = new Map(existingFloors.map(floor => [floor.name.toLowerCase(), floor]));
+          const sourceFloorIdToTargetId = new Map<string, string>();
+
+          from(floorRows).pipe(
+            concatMap(row => {
+              const known = floorsByName.get(row.floorName.toLowerCase());
+              if (known) {
+                sourceFloorIdToTargetId.set(row.sourceFloorId, known.id_);
+                return this.svc.update(known.id_, { name: known.name, sortOrder: row.sortOrder }).pipe(
+                  map(saved => {
+                    floorsByName.set(saved.name.toLowerCase(), saved);
+                    sourceFloorIdToTargetId.set(row.sourceFloorId, saved.id_);
+                    return saved;
+                  })
+                );
+              }
+
+              return this.svc.create({ name: row.floorName, sortOrder: row.sortOrder }).pipe(
+                map(saved => {
+                  floorsByName.set(saved.name.toLowerCase(), saved);
+                  sourceFloorIdToTargetId.set(row.sourceFloorId, saved.id_);
+                  return saved;
+                })
+              );
+            }),
+            toArray(),
+            concatMap(() => {
+              const tableRowsWithTarget = tableRows.map(row => {
+                const targetFloorId = sourceFloorIdToTargetId.get(row.sourceFloorId)
+                  ?? floorsByName.get(row.sourceFloorName.toLowerCase())?.id_
+                  ?? null;
+                return { row, targetFloorId };
+              }).filter(item => item.targetFloorId !== null) as Array<{ row: TableImportRow; targetFloorId: string }>;
+
+              if (tableRowsWithTarget.length === 0) {
+                return of([] as Place[]);
+              }
+
+              const targetFloorIds = Array.from(new Set(tableRowsWithTarget.map(item => item.targetFloorId)));
+              return forkJoin(targetFloorIds.map(floorId => this.svc.places(floorId).pipe(
+                map(places => ({ floorId, places }))
+              ))).pipe(
+                concatMap(existingPlacesByFloor => {
+                  const placeByFloorAndName = new Map<string, Place>();
+                  existingPlacesByFloor.forEach(entry => {
+                    entry.places.forEach(place => {
+                      placeByFloorAndName.set(`${entry.floorId}::${place.name.toLowerCase()}`, place);
+                    });
+                  });
+
+                  return from(tableRowsWithTarget).pipe(
+                    concatMap(({ row, targetFloorId }) => {
+                      const key = `${targetFloorId}::${row.tableName.toLowerCase()}`;
+                      const existing = placeByFloorAndName.get(key);
+                      const input: PlaceInput = {
+                        name: row.tableName,
+                        floorId: targetFloorId,
+                        x: row.x,
+                        y: row.y,
+                        width: row.width,
+                        height: row.height,
+                        fontSize: row.fontSize,
+                        fontColor: row.fontColor
+                      };
+
+                      if (existing) {
+                        return this.svc.updatePlace(existing.id_, input).pipe(
+                          map(saved => {
+                            placeByFloorAndName.set(key, saved);
+                            return saved;
+                          })
+                        );
+                      }
+
+                      return this.svc.createPlace(input).pipe(
+                        map(saved => {
+                          placeByFloorAndName.set(key, saved);
+                          return saved;
+                        })
+                      );
+                    }),
+                    toArray()
+                  );
+                })
+              );
+            })
+          ).subscribe({
+            next: importedTables => {
+              resolve({ floorsImported: floorRows.length, tablesImported: importedTables.length });
+            },
+            error: err => reject(err)
+          });
+        },
+        error: err => reject(err)
+      });
+    });
+  }
+
+  private toText(value: unknown): string {
+    return String(value ?? '').trim();
+  }
+
+  private toNullableText(value: unknown): string | null {
+    const text = this.toText(value);
+    return text === '' ? null : text;
+  }
+
+  private toNullableWholeNumber(value: unknown): number | null {
+    const text = this.toText(value);
+    if (text === '') return null;
+    const parsed = Number(text);
+    if (!Number.isFinite(parsed)) return null;
+    return Math.round(parsed);
+  }
+
+  private toWholeNumberOrDefault(value: unknown, fallback: number): number {
+    const parsed = this.toNullableWholeNumber(value);
+    return parsed ?? fallback;
+  }
+
   toggleFloors() {
     this.floorsCollapsed.set(!this.floorsCollapsed());
   }
@@ -248,7 +463,7 @@ export class Floors implements OnInit {
 
   // The plan keeps the POS canvas origin at 0,0 so a table sits where the POS puts it; the
   // viewBox only grows to fit the outermost table - including one being dragged past the edge.
-  plan = computed<{ tables: PlanTable[]; viewBox: string }>(() => {
+  plan = computed<{ tables: PlanTable[]; viewBox: string; width: number; height: number }>(() => {
     const preview = this.planPreview();
     const tables = this.places().map(place => {
       const live = preview && preview.id === place.id_ ? preview : null;
@@ -265,7 +480,14 @@ export class Floors implements OnInit {
 
     const right = tables.reduce((max, t) => Math.max(max, t.x + t.width), 0);
     const bottom = tables.reduce((max, t) => Math.max(max, t.y + t.height), 0);
-    return { tables, viewBox: `0 0 ${right + PLAN_PADDING} ${bottom + PLAN_PADDING}` };
+    const width = right + PLAN_PADDING;
+    const height = bottom + PLAN_PADDING;
+    return {
+      tables,
+      viewBox: `0 0 ${width} ${height}`,
+      width,
+      height
+    };
   });
 
   selectedFloorCount = computed(() => this.selectedFloorIds().size);
@@ -479,7 +701,7 @@ export class Floors implements OnInit {
 
   placeName(id: string | null): string {
     if (!id) return '';
-    return this.places().find(place => place.id_ === id)?.name ?? id;
+    return this.places().find(place => place.id_ === id)?.name ?? '';
   }
 
   selectFloor(floor: Floor) {

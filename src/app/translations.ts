@@ -23,6 +23,7 @@ const en: Record<string, string> = {
   'nav.floors': 'Floors',
   'nav.printers': 'Printers',
   'nav.operators': 'Operators',
+  'nav.dbSync': 'Database Sync',
   'nav.reports': 'Reports',
   'nav.language': 'Language',
 
@@ -365,7 +366,30 @@ const en: Record<string, string> = {
   'reports.runFailed': 'Failed to run "{name}"',
   'reports.confirmDelete': 'Delete report template "{name}"?',
   'reports.deleted': 'Deleted "{name}"',
-  'reports.deleteFailed': 'Failed to delete "{name}"'
+  'reports.deleteFailed': 'Failed to delete "{name}"',
+
+  'dbSync.title': 'Database synchronization',
+  'dbSync.description': 'Copies operational data from the configured remote source into the local database.',
+  'dbSync.step1': 'Stops local changes while synchronization runs.',
+  'dbSync.step2': 'Imports latest remote records into local tables.',
+  'dbSync.step3': 'Refresh views after completion to see imported data.',
+  'dbSync.run': 'Synchronize Remote → Local',
+  'dbSync.running': 'Synchronizing…',
+  'dbSync.test': 'Test connection',
+  'dbSync.testing': 'Testing…',
+  'dbSync.testResponse': 'Connection test response',
+  'dbSync.testSuccess': 'Connection test succeeded.',
+  'dbSync.testFailed': 'Connection test failed.',
+  'dbSync.confirm': 'Start synchronization from remote database to local database now?',
+  'dbSync.host': 'Remote host',
+  'dbSync.port': 'Remote port',
+  'dbSync.database': 'Remote database/service',
+  'dbSync.user': 'Remote user',
+  'dbSync.password': 'Remote password',
+  'dbSync.validation': 'Please fill all required remote database properties.',
+  'dbSync.validationPort': 'Please enter a valid remote database port.',
+  'dbSync.success': 'Database synchronization finished.',
+  'dbSync.failed': 'Database synchronization failed.'
 };
 
 const de: Record<string, string> = {
@@ -383,6 +407,7 @@ const de: Record<string, string> = {
   'nav.floors': 'Räume',
   'nav.printers': 'Drucker',
   'nav.operators': 'Bediener',
+  'nav.dbSync': 'Datenbank-Sync',
   'nav.reports': 'Berichte',
   'nav.language': 'Sprache',
 
@@ -725,7 +750,30 @@ const de: Record<string, string> = {
   'reports.runFailed': '„{name}“ konnte nicht ausgeführt werden',
   'reports.confirmDelete': 'Berichtsvorlage „{name}“ löschen?',
   'reports.deleted': '„{name}“ gelöscht',
-  'reports.deleteFailed': '„{name}“ konnte nicht gelöscht werden'
+  'reports.deleteFailed': '„{name}“ konnte nicht gelöscht werden',
+
+  'dbSync.title': 'Datenbank-Synchronisierung',
+  'dbSync.description': 'Übernimmt Betriebsdaten von der konfigurierten Remote-Quelle in die lokale Datenbank.',
+  'dbSync.step1': 'Lokale Änderungen werden während der Synchronisierung angehalten.',
+  'dbSync.step2': 'Aktuelle Remote-Datensätze werden in lokale Tabellen importiert.',
+  'dbSync.step3': 'Nach Abschluss Ansichten aktualisieren, um importierte Daten zu sehen.',
+  'dbSync.run': 'Remote → Lokal synchronisieren',
+  'dbSync.running': 'Synchronisiert…',
+  'dbSync.test': 'Verbindung testen',
+  'dbSync.testing': 'Teste…',
+  'dbSync.testResponse': 'Antwort Verbindungstest',
+  'dbSync.testSuccess': 'Verbindungstest erfolgreich.',
+  'dbSync.testFailed': 'Verbindungstest fehlgeschlagen.',
+  'dbSync.confirm': 'Synchronisierung von Remote-Datenbank zur lokalen Datenbank jetzt starten?',
+  'dbSync.host': 'Remote-Host',
+  'dbSync.port': 'Remote-Port',
+  'dbSync.database': 'Remote-Datenbank/Service',
+  'dbSync.user': 'Remote-Benutzer',
+  'dbSync.password': 'Remote-Passwort',
+  'dbSync.validation': 'Bitte alle erforderlichen Remote-Datenbank-Eigenschaften ausfüllen.',
+  'dbSync.validationPort': 'Bitte einen gültigen Remote-Datenbank-Port eingeben.',
+  'dbSync.success': 'Datenbank-Synchronisierung abgeschlossen.',
+  'dbSync.failed': 'Datenbank-Synchronisierung fehlgeschlagen.'
 };
 
 export const TRANSLATIONS: Record<Lang, Record<string, string>> = { de, en };

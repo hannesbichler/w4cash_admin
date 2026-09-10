@@ -2,7 +2,9 @@
   <div class="toolbar">
     <button (click)="load()" class="btn btn-secondary">&#8635; {{ t('common.refresh') }}</button>
     <button (click)="startCreateFloor()" class="btn btn-primary">{{ t('floors.new') }}</button>
+    <button (click)="openImportFloorsAndTables()" class="btn btn-secondary">Import XLSX</button>
     <button (click)="exportFloorsAndTables()" class="btn btn-secondary">Export XLSX</button>
+    <input #importFileInput type="file" accept=".xlsx,.xls" (change)="importFloorsAndTables($event)" hidden />
   </div>
   @if (actionMsg()) {
     <div class="flash">{{ actionMsg() }}</div>
@@ -166,7 +168,11 @@
               <div class="empty">{{ t('floors.noTables') }}</div>
             } @else {
               <div class="plan-wrap" #planWrap>
-              <svg #planSvg class="floor-plan" [attr.viewBox]="plan().viewBox" preserveAspectRatio="xMidYMid meet">
+                  <svg #planSvg class="floor-plan"
+                    [attr.viewBox]="plan().viewBox"
+                    [attr.width]="plan().width"
+                    [attr.height]="plan().height"
+                    preserveAspectRatio="xMidYMid meet">
                 @for (table of plan().tables; track table.place.id_) {
                   <g class="plan-table" [class.selected]="editingPlaceId() === table.place.id_"
                      (pointerdown)="startMove(table, $event)"

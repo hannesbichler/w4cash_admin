@@ -9,6 +9,7 @@ import { Taxes } from './taxes';
 import { Printers } from './printers';
 import { Operators } from './operators';
 import { Reports } from './reports';
+import { DatabaseSync } from './database-sync';
 import { authGuard, loginGuard } from './auth.guard';
 import { LoginPage } from './login-page';
 
@@ -23,6 +24,7 @@ export const routes: Routes = [
   { path: 'taxes', component: Taxes, canActivate: [authGuard] },
   { path: 'printers', component: Printers, canActivate: [authGuard] },
   { path: 'operators', component: Operators, canActivate: [authGuard] },
+  { path: 'database-sync', component: DatabaseSync, canActivate: [authGuard] },
   { path: 'reports', component: Reports, canActivate: [authGuard] },
   { path: '**', redirectTo: '' },
 ];
