@@ -64,6 +64,8 @@ export class App {
   langLabel = (lang: Lang) => LANG_LABELS[lang];
   loggedIn = this.auth.loggedIn;
   userName = this.auth.userName;
+  showMenu = computed(() => !this.auth.isConfigured() || this.loggedIn());
+  authenticationEnabled = this.auth.isConfigured();
 
   /** Name of the rail showing down the left, or null when none is. */
   sideNav = signal<string | null>(null);

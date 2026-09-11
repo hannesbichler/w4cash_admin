@@ -8,7 +8,7 @@ import { DatabaseSyncService, RemoteDbProperties } from './database-sync.service
 const EMPTY_REMOTE_DB_PROPERTIES: RemoteDbProperties = {
   host: '',
   port: 1521,
-  database: '',
+  database: 'XE',
   user: '',
   password: ''
 };

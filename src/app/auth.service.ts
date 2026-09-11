@@ -40,7 +40,7 @@ export class AuthService {
   }
 
   isConfigured(): boolean {
-    return !!environment.msal.clientId && environment.msal.clientId !== 'YOUR_CLIENT_ID';
+    return environment.authEnabled && !!environment.msal.clientId && environment.msal.clientId !== 'YOUR_CLIENT_ID';
   }
 
   /**

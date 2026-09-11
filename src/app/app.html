@@ -61,7 +61,7 @@
 </svg>
 
 <div class="layout">
-  @if (loggedIn()) {
+  @if (showMenu()) {
   <header>
     <div class="header-bar">
       <h1>{{ t('app.title') }}</h1>
@@ -75,6 +75,7 @@
           </select>
         </label>
 
+        @if (authenticationEnabled) {
         <div class="account-menu-wrap">
           <button type="button" class="account-button" (click)="toggleAccountMenu($event)">
             <span class="account-label">{{ loggedIn() ? userName() : 'Account' }}</span>
@@ -93,6 +94,7 @@
             </div>
           }
         </div>
+        }
       </div>
     </div>
     <nav class="main-nav">
@@ -131,7 +133,7 @@
   }
 
   <div class="body">
-    @if (loggedIn() && rail(); as rail) {
+    @if (showMenu() && rail(); as rail) {
       <!-- Clicks inside the rail must not reach the document handler that closes the dropdowns,
            or picking a screen would shut the rail you picked it from. -->
       <nav class="side-nav" [attr.aria-label]="t(rail.title)" (click)="$event.stopPropagation()">

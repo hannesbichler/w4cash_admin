@@ -28,18 +28,18 @@
       </label>
 
       <label class="field-label">
-        {{ t('dbSync.database') }} *
-        <input class="filter-input field-full" [ngModel]="form().database" (ngModelChange)="updateForm('database', $event)" />
-      </label>
-
-      <label class="field-label">
         {{ t('dbSync.user') }} *
         <input class="filter-input field-full" [ngModel]="form().user" (ngModelChange)="updateForm('user', $event)" />
       </label>
 
-      <label class="field-label field-full-span">
+      <label class="field-label">
         {{ t('dbSync.password') }} *
         <input type="password" class="filter-input field-full" [ngModel]="form().password" (ngModelChange)="updateForm('password', $event)" />
+      </label>
+
+      <label class="field-label">
+        {{ t('dbSync.database') }} *
+        <input class="filter-input field-full" [ngModel]="form().database" (ngModelChange)="updateForm('database', $event)" readonly/>
       </label>
     </div>
 
