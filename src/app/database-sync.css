@@ -12,10 +12,10 @@
 }
 
 .sync-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(58, 111, 255, .08);
-  border: 1px solid #dde8ff;
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / .08);
+  border: 1px solid var(--border);
   max-width: 860px;
   padding: 18px;
 }
@@ -23,12 +23,12 @@
 .sync-card h2 {
   margin: 0 0 10px;
   font-size: 1rem;
-  color: #3a6fff;
+  color: var(--accent);
 }
 
 .sync-card p {
   margin: 0;
-  color: #1a1a2e;
+  color: var(--text);
 }
 
 .form-grid {
@@ -44,7 +44,7 @@
   gap: 4px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #7a8ab0;
+  color: var(--text-muted);
 }
 
 .field-full { width: 100%; }
@@ -56,19 +56,19 @@
 .response-box {
   margin-top: 14px;
   border-radius: 8px;
-  border: 1px solid #d7def4;
-  background: #f7f9ff;
+  border: 1px solid var(--border);
+  background: var(--hover);
   padding: 10px 12px;
 }
 
+/* Outcome is carried by the weight of the left rule: hairline for success, solid for error. */
 .response-box.success {
-  border-color: #b7ebc1;
-  background: #eefcf1;
+  border-left: 4px solid var(--border-strong);
 }
 
 .response-box.error {
-  border-color: #ffd5d5;
-  background: #fff1f1;
+  border-left: 4px solid var(--text);
+  background: var(--hover);
 }
 
 .response-title {
@@ -76,7 +76,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
-  color: #55638a;
+  color: var(--text-muted);
   margin-bottom: 6px;
 }
 
@@ -85,12 +85,12 @@
   white-space: pre-wrap;
   word-break: break-word;
   font-family: inherit;
-  color: #1a1a2e;
+  color: var(--text);
 }
 
 .sync-card ul {
   margin: 12px 0 0;
-  color: #4d5a7c;
+  color: var(--text-muted);
   padding-left: 22px;
 }
 
@@ -98,7 +98,9 @@
   margin-top: 14px;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #ffd5d5;
-  background: #fff1f1;
-  color: #b42318;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text);
+  background: var(--hover);
+  color: var(--text);
+  font-weight: 600;
 }

@@ -2,6 +2,9 @@
   <div class="toolbar">
     <button (click)="load()" class="btn btn-secondary">&#8635; {{ t('common.refresh') }}</button>
     <button (click)="startCreate()" class="btn btn-primary">{{ t('categories.new') }}</button>
+    <button (click)="exportCategories()" class="btn btn-secondary" [disabled]="loading()">{{ t('categories.export') }}</button>
+    <button type="button" (click)="importFileInput.click()" class="btn btn-secondary" [disabled]="loading()">{{ t('categories.import') }}</button>
+    <input #importFileInput type="file" accept=".xlsx,.xls" hidden (change)="importCategories($event)" />
   </div>
   @if (actionMsg()) {
     <div class="flash">{{ actionMsg() }}</div>

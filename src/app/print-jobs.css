@@ -30,26 +30,26 @@
   align-items: center;
   gap: 6px;
   font-size: 0.85rem;
-  color: #5a6a9a;
+  color: var(--text-muted);
   cursor: pointer;
   user-select: none;
 }
 
-.error-text { color: #c62828; font-size: 0.82rem; word-break: break-word; }
+.error-text { color: var(--text); font-weight: 600; font-size: 0.82rem; word-break: break-word; }
 
-.person-id { color: #9aabcc; font-size: 0.8rem; }
+.person-id { color: var(--text-subtle); font-size: 0.8rem; }
 
 /* Receipt preview styled like the printed ticket (PlainTextPrintable) */
 .ticket {
-  background: #fff;
-  border: 1px solid #dde8ff;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 14px 12px;
   width: 250px;              /* ~80mm receipt */
   align-self: center;
-  box-shadow: 0 2px 8px rgba(26,26,46,.12);
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / .12);
   font-family: Arial, sans-serif;
-  color: #1a1a2e;
+  color: var(--text);
 }
 
 .ticket > div {
@@ -69,4 +69,4 @@
 
 .t-line { padding-left: 1.6em; text-indent: -1.6em; } /* hanging indent on wrapped lines */
 
-.t-divider { border-top: 1.5px solid #1a1a2e; margin: 5px 0; }
+.t-divider { border-top: 1.5px solid var(--text); margin: 5px 0; }

@@ -13,9 +13,9 @@
 .cc-input-row .filter-input { width: 240px; }
 
 .cc-result {
-  background: #fff;
+  background: var(--surface);
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(58,111,255,.08);
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / .08);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -24,33 +24,34 @@
 
 .cc-result-header { display: flex; align-items: center; gap: 10px; }
 
-.cc-result-header h2 { font-size: 1rem; color: #3a6fff; font-weight: 600; }
+.cc-result-header h2 { font-size: 1rem; color: var(--accent); font-weight: 600; }
 
-.badge.open { background: #fff3cd; color: #8a6400; }
+/* The middle step of the greyscale status ramp: heavier than .ok, lighter than the solid .err. */
+.badge.open { background: var(--selected); color: var(--text); border: 1px solid var(--border-strong); }
 
 .cc-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background: #fff;
-  border: 1px solid #eef2ff;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: visible;
 }
 
 .cc-table th {
-  background: #e8f0ff;
+  background: var(--selected);
   text-align: left;
   padding: 8px 10px;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: .05em;
-  color: #3a6fff;
+  color: var(--accent);
   font-weight: 700;
 }
 
-.cc-table td { padding: 7px 10px; border-bottom: 1px solid #eef2ff; font-size: 0.85rem; }
+.cc-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 
 .cc-table tr:last-child td { border-bottom: none; }
 
-.cc-empty-row { color: #7a8ab0; text-align: center; font-style: italic; }
+.cc-empty-row { color: var(--text-muted); text-align: center; font-style: italic; }

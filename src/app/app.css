@@ -1,11 +1,11 @@
 .layout { display: flex; flex-direction: column; height: 100vh; }
 
 header {
-  background: #3a6fff;
-  color: #fff;
+  background: var(--header-bg);
+  color: var(--header-text);
   padding: 12px 20px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(58,111,255,.3);
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / .18);
 }
 
 header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spacing: .01em; }
@@ -15,7 +15,7 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #c7d8ff;
+  color: var(--header-dim);
   text-decoration: none;
   padding: 6px 12px;
   border-radius: 6px;
@@ -26,7 +26,7 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
 /* The sprite only defines symbols; nothing in it is meant to render on its own. */
 .icon-sprite { display: none; }
 
-/* Drawn in the current text colour, so one symbol serves the blue bar, the white menus and the
+/* Drawn in the current text colour, so one symbol serves the dark bar, the white menus and the
    active state. Held slightly back from the label so the words stay the loudest thing in a row. */
 .nav-icon {
   width: 16px;
@@ -46,8 +46,8 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
 .main-nav > a.active .nav-icon,
 .nav-group-toggle.active .nav-icon,
 .side-nav a.active .nav-icon { opacity: 1; }
-.main-nav > a:hover { background: rgba(255,255,255,.12); color: #fff; }
-.main-nav > a.active { background: rgba(255,255,255,.92); color: #3a6fff; }
+.main-nav > a:hover { background: rgba(255,255,255,.12); color: var(--header-text); }
+.main-nav > a.active { background: rgba(255,255,255,.92); color: var(--header-bg); }
 
 .header-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 
@@ -63,7 +63,7 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #c7d8ff;
+  color: var(--header-dim);
 }
 .lang-switch select {
   padding: 4px 8px;
@@ -71,7 +71,7 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #3a6fff;
+  color: var(--header-bg);
   background: rgba(255,255,255,.92);
   cursor: pointer;
 }
@@ -86,7 +86,7 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   gap: 8px;
   background: rgba(255,255,255,.15);
   border: 1px solid rgba(255,255,255,.4);
-  color: #fff;
+  color: var(--header-text);
   border-radius: 999px;
   font: inherit;
   font-size: 0.8rem;
@@ -113,18 +113,18 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   min-width: 180px;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border: 1px solid #dfe7ff;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 10px 24px rgba(26, 26, 46, 0.12);
+  box-shadow: 0 10px 24px rgb(var(--shadow-rgb) / .12);
   overflow: hidden;
   z-index: 20;
 }
 
 .dropdown-item {
   border: none;
-  background: #fff;
-  color: #1a1a2e;
+  background: var(--surface);
+  color: var(--text);
   text-align: left;
   padding: 10px 12px;
   font: inherit;
@@ -134,7 +134,7 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
 }
 
 .dropdown-item:hover {
-  background: #f3f6ff;
+  background: var(--hover);
 }
 
 /* The only nav control left: a toggle that opens its rail down the left. */
@@ -146,14 +146,14 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   border: none;
   cursor: pointer;
   font: inherit;
-  color: #c7d8ff;
+  color: var(--header-dim);
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
 }
-.nav-group-toggle:hover { background: rgba(255,255,255,.12); color: #fff; }
-.nav-group-toggle.active { background: rgba(255,255,255,.92); color: #3a6fff; }
+.nav-group-toggle:hover { background: rgba(255,255,255,.12); color: var(--header-text); }
+.nav-group-toggle.active { background: rgba(255,255,255,.92); color: var(--header-bg); }
 
 .nav-group-toggle .caret { font-size: 0.7rem; }
 
@@ -173,9 +173,9 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   gap: 2px;
   padding: 14px 10px;
   overflow: auto;
-  background: #fff;
-  border-right: 1px solid #dde8ff;
-  box-shadow: 2px 0 10px rgba(58,111,255,.06);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 10px rgb(var(--shadow-rgb) / .04);
 }
 
 .side-nav-title {
@@ -183,7 +183,7 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .05em;
-  color: #7a8ab0;
+  color: var(--text-muted);
   padding: 0 12px 10px;
 }
 
@@ -191,12 +191,12 @@ header h1 { font-size: 1.2rem; margin-bottom: 8px; font-weight: 600; letter-spac
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #1a1a2e;
+  color: var(--text);
   text-decoration: none;
   padding: 9px 12px;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
 }
-.side-nav a:hover { background: #f0f4ff; color: #3a6fff; }
-.side-nav a.active { background: #e8f0ff; color: #3a6fff; }
+.side-nav a:hover { background: var(--hover); }
+.side-nav a.active { background: var(--selected); }

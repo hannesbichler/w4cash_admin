@@ -44,7 +44,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .05em;
-  color: #3a6fff;
+  color: var(--accent);
 }
 
 /* Sits at the right end of the header and is sized like a real button, not a text link. */
@@ -52,7 +52,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: #e8f0ff;
+  background: var(--selected);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -60,7 +60,7 @@
   font: inherit;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #3a6fff;
+  color: var(--accent);
   transition: opacity .15s, transform .1s;
 }
 .collapse-button:hover { opacity: .88; transform: translateY(-1px); }
@@ -69,7 +69,7 @@
 .caret { font-size: 1rem; line-height: 1; }
 
 .section-count {
-  background: #e8f0ff;
+  background: var(--selected);
   border-radius: 10px;
   padding: 1px 8px;
   font-size: 0.72rem;
@@ -79,7 +79,7 @@
 .section-note {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--text);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -96,7 +96,7 @@
 .card-cell {
   font-family: 'Cascadia Mono', Consolas, monospace;
   font-size: 0.82rem;
-  color: #5a6a9a;
+  color: var(--text-muted);
 }
 
 .field-label {
@@ -104,9 +104,9 @@
   margin-top: 12px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #7a8ab0;
+  color: var(--text-muted);
 }
 
 .field-full { width: 100%; }
 
-.field-hint { font-size: 0.78rem; color: #7a8ab0; line-height: 1.5; }
+.field-hint { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
