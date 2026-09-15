@@ -3,6 +3,9 @@
     <button (click)="load()" class="btn btn-secondary">&#8635; {{ t('common.refresh') }}</button>
     <button (click)="startCreateRole()" class="btn btn-secondary">{{ t('operators.newRole') }}</button>
     <button (click)="startCreatePerson()" class="btn btn-primary">{{ t('operators.new') }}</button>
+    <button (click)="exportPersons()" class="btn btn-secondary" [disabled]="loading()">{{ t('operators.export') }}</button>
+    <button type="button" (click)="importFileInput.click()" class="btn btn-secondary" [disabled]="loading()">{{ t('operators.import') }}</button>
+    <input #importFileInput type="file" accept=".xlsx,.xls" hidden (change)="importPersons($event)" />
   </div>
   @if (actionMsg()) {
     <div class="flash">{{ actionMsg() }}</div>

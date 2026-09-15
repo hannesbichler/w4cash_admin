@@ -2,7 +2,8 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, of, catchError, from, concatMap, toArray } from 'rxjs';
+import { forkJoin, of, catchError, from, concatMap, toArray, firstValueFrom } from 'rxjs';
+import * as XLSX from 'xlsx';
 import { PersonService } from './person.service';
 import { Person, PersonInput, Role, RoleInput } from './person.model';
 import { I18nService } from './i18n.service';
@@ -15,6 +16,16 @@ const EMPTY_PERSON_FORM: PersonInput = { name: '', role: '', card: null };
 
 /** Which entity the detail panel is editing. */
 type Panel = 'role' | 'person' | null;
+
+/** One row of the import sheet, before its role is resolved against the live roles. */
+interface PersonImportRow {
+  sourceId: string;
+  name: string;
+  roleName: string;
+  sourceRoleId: string;
+  /** Undefined when the sheet has no Card column, so an existing card is left alone. */
+  card: string | null | undefined;
+}
 
 @Component({
   selector: 'app-operators',
@@ -313,6 +324,146 @@ export class Operators implements OnInit {
       },
       error: () => this.flash(this.t('operators.deleteSelectedFailed'))
     });
+  }
+
+  // --- XLSX export / import ----------------------------------------------------------------
+
+  // Roles go out by name, since that is what reads back across databases; the ids ride along
+  // so a round-trip into the same database matches rows exactly even after a rename.
+  exportPersons() {
+    const persons = [...this.persons()].sort((a, b) => a.name.localeCompare(b.name));
+    if (persons.length === 0) {
+      this.flash(this.t('operators.exportEmpty'));
+      return;
+    }
+
+    const rows = persons.map(person => ({
+      Name: person.name,
+      Role: this.roles().find(role => role.id_ === person.role)?.name ?? '',
+      Card: person.card ?? '',
+      Id: person.id_,
+      'Role id': person.role
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Operators');
+    XLSX.writeFile(workbook, `operators-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    this.flash(this.t('operators.exported', { count: persons.length }));
+  }
+
+  importPersons(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] ?? null;
+    if (!file) return;
+
+    this.loading.set(true);
+    file.arrayBuffer()
+      .then(buffer => {
+        const rows = this.readPersonRows(XLSX.read(buffer, { type: 'array' }));
+        if (rows.length === 0) throw new Error(this.t('operators.importNone'));
+        return this.importParsedPersons(rows);
+      })
+      .then(summary => {
+        let message = this.t('operators.imported', { created: summary.created, updated: summary.updated });
+        if (summary.rolesCreated > 0) message += ' ' + this.t('operators.importRolesCreated', { count: summary.rolesCreated });
+        if (summary.failed > 0) message += ' ' + this.t('operators.importSkipped', { count: summary.failed });
+        this.flash(message);
+        this.load();
+      })
+      .catch(error => {
+        this.loading.set(false);
+        this.flash(error instanceof Error ? error.message : this.t('operators.importFailed'));
+      })
+      .finally(() => {
+        if (input) input.value = '';
+      });
+  }
+
+  // Reads the sheet the export writes, but any first sheet will do and a row only needs a
+  // Name; ids are optional, so a hand-written file can address roles by name alone.
+  private readPersonRows(workbook: XLSX.WorkBook): PersonImportRow[] {
+    const sheet = workbook.Sheets['Operators'] ?? workbook.Sheets[workbook.SheetNames[0]];
+    if (!sheet) return [];
+    return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
+      .map(row => {
+        const card = 'Card' in row ? this.toText(row['Card']) : undefined;
+        return {
+          sourceId: this.toText(row['Id']),
+          name: this.toText(row['Name']),
+          roleName: this.toText(row['Role']),
+          sourceRoleId: this.toText(row['Role id']),
+          card: card === undefined ? undefined : (card === '' ? null : card)
+        };
+      })
+      .filter(row => row.name !== '');
+  }
+
+  private async importParsedPersons(
+    rows: PersonImportRow[]
+  ): Promise<{ created: number; updated: number; failed: number; rolesCreated: number }> {
+    // Fresh lists rather than the signals, so the import matches what is actually stored.
+    const [roles, persons] = await Promise.all([
+      firstValueFrom(this.svc.roles()),
+      firstValueFrom(this.svc.persons())
+    ]);
+    const roleIds = new Set(roles.map(role => role.id_));
+    const roleByName = new Map(roles.map(role => [role.name.toLowerCase(), role.id_]));
+    const byId = new Map(persons.map(person => [person.id_, person]));
+    // PEOPLE.NAME is unique, so a name is a safe fallback match when the id is foreign.
+    const byName = new Map(persons.map(person => [person.name.toLowerCase(), person]));
+
+    let created = 0;
+    let updated = 0;
+    let failed = 0;
+    let rolesCreated = 0;
+
+    for (const row of rows) {
+      try {
+        // The role name wins over the id, which only means something in the database the file
+        // came from; an id is used only when it also exists here.
+        let roleId = row.roleName ? roleByName.get(row.roleName.toLowerCase()) : undefined;
+        if (!roleId && row.sourceRoleId && roleIds.has(row.sourceRoleId)) roleId = row.sourceRoleId;
+        if (!roleId && row.roleName) {
+          // A role this database does not know yet is created, so a file from another till
+          // imports in one go instead of failing row by row.
+          const role = await firstValueFrom(this.svc.createRole({ name: row.roleName }));
+          roleId = role.id_;
+          roleIds.add(roleId);
+          roleByName.set(row.roleName.toLowerCase(), roleId);
+          rolesCreated++;
+        }
+
+        const target = (row.sourceId ? byId.get(row.sourceId) : undefined)
+          ?? byName.get(row.name.toLowerCase());
+        roleId ??= target?.role;
+        // The POS needs a role to place the Bediener in; a row that cannot name one is skipped.
+        if (!roleId) { failed++; continue; }
+
+        const value: PersonInput = {
+          name: row.name,
+          role: roleId,
+          card: row.card === undefined ? (target?.card ?? null) : row.card
+        };
+        const saved = target
+          ? await firstValueFrom(this.svc.updatePerson(target.id_, value))
+          : await firstValueFrom(this.svc.createPerson(value));
+        if (saved?.id_) {
+          if (target) byName.delete(target.name.toLowerCase());
+          byId.set(saved.id_, saved);
+          byName.set(saved.name.toLowerCase(), saved);
+        }
+        if (target) updated++; else created++;
+      } catch {
+        failed++;
+      }
+    }
+
+    return { created, updated, failed, rolesCreated };
+  }
+
+  private toText(value: unknown): string {
+    return String(value ?? '').trim();
   }
 
   closePanel() {
